@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local secrets / env (the OpenAI key lives in .env; .env.example stays tracked.
+# frontend/.env holds no secret — only .local overrides there are ignored.)
+.env
+.env.local
+.env.*.local
+/frontend/.env.local
+/frontend/.env.*.local
+
+# Project artifacts (generated, reproducible)
+/data/*.csv
+/data_stress/*.csv
+/artifacts/*.json
+/artifacts/*.html
+/artifacts_stress/*.json
+/artifacts_stress/*.html
+/uploads/
+*.db
+
+# Node / frontend build
+node_modules/
+*.tsbuildinfo
+
+# macOS
+.DS_Store

@@ -1,0 +1,122 @@
+# =============================================================================
+# Verified Financials — "the loan agreement as config"
+# Every rate, cap, threshold, and rule the engines apply is read from this file.
+# A real client's credit agreement would ship its own version of this file.
+# =============================================================================
+
+facility:
+  borrower: "McLane-Style Distribution Holdings, LLC"
+  lender: "Meridian Bank, N.A."                          # the lending bank (NOT Red Lion — that's the advisor)
+  agent: "Meridian Bank, N.A., as Administrative Agent"
+  agreement_reference: "Credit Agreement dated as of November 1, 2025"
+  name: "Senior Secured Revolving Credit Facility"
+  commitment: "40000000"            # $40M revolver commitment
+  outstanding: "22000000"           # currently drawn
+  lc_exposure: "0"                  # outstanding letter-of-credit exposure
+  currency: "USD"
+  as_of_date: "2025-12-31"
+
+borrowing_base:
+  accounts_receivable:
+    advance_rate: "0.85"            # 85% advance against eligible A/R
+    # Categorical ineligibles are applied FIRST (per customer) to build the
+    # pre-concentration eligible base. Order does not matter because each
+    # dollar is excluded by at most one reason (clamped in the engine).
+    ineligible_rules:
+      - id: "ar_aged_90_plus"
+        label: "Receivables aged 90+ days past due"
+        type: "aged_bucket"
+        bucket_field: "90_plus"     # exclude the dollars sitting in this aging bucket
+        citation: 'Credit Agreement §1.1 "Eligible Receivables" (d)'
+      - id: "ar_foreign_uninsured"
+        label: "Foreign account debtors without credit insurance or L/C"
+        type: "predicate"
+        predicate: "country != 'US' and not credit_insured"
+        citation: 'Credit Agreement §1.1 "Eligible Receivables" (h)'
+      - id: "ar_intercompany"
+        label: "Affiliate / intercompany receivables"
+        type: "predicate"
+        predicate: "is_affiliate == True"
+        citation: 'Credit Agreement §1.1 "Eligible Receivables" (b)'
+    # Cross-aging ("taint"): if more than `threshold_pct` of an obligor's
+    # balance is past due, the ENTIRE obligor balance is ineligible.
+    # Default OFF so it cannot perturb the calibrated demo numbers; flip
+    # enabled:true to demonstrate adaptability to a stricter agreement.
+    cross_aging:
+      enabled: false
+      threshold_pct: "0.50"
+      citation: 'Credit Agreement §1.1 "Eligible Receivables" (e) Cross-Age'
+    # Single-obligor concentration limit, applied SECOND against the fixed
+    # pre-concentration base. Only the EXCESS above the cap is excluded.
+    concentration_cap:
+      pct: "0.15"                   # 15% single-obligor limit
+      basis: "post_categorical"     # measure cap against pre-concentration eligible base
+      citation: 'Credit Agreement §1.1 "Eligible Receivables" (m) Concentration Limit'
+
+  inventory:
+    advance_rate: "0.50"            # 50% advance against eligible inventory (at cost)
+    ineligible_rules:
+      - id: "inv_obsolete"
+        label: "Obsolete / slow-moving inventory"
+        type: "predicate"
+        predicate: "obsolete == True"
+        citation: 'Credit Agreement §1.1 "Eligible Inventory" (e)'
+
+  # Facility-level reserves subtracted at the borrowing-base roll-up.
+  # Default empty (hits the calibrated numbers); add entries to model
+  # dilution / rent / priority-payable reserves for a real agreement.
+  reserves: []
+
+fccr:
+  covenant_threshold: "1.10"        # FCCR shall not be less than 1.10 to 1.00
+  # Convention A (dominant middle-market): taxes & distributions are deducted
+  # in the NUMERATOR only. The engine enforces that each component appears in
+  # exactly one place (no double counting).
+  numerator:
+    add: ["ebitda"]
+    subtract: ["unfinanced_capex", "cash_taxes", "distributions"]
+  denominator:
+    add: ["cash_interest", "scheduled_principal"]
+  early_warning:
+    headroom_pct_warn: "0.15"       # warn if actual < threshold * (1 + 0.15)
+    declining_quarters_warn: 2      # warn if N consecutive quarter-over-quarter declines
+
+verification:
+  default_tolerance_abs: "1000"     # $1k default tolerance
+  checks:
+    - id: "ar_bs_vs_aging"
+      label: "Balance sheet A/R ties to A/R aging detail"
+      left: "balance_sheet.accounts_receivable"
+      right: "ar_aging.total_sum"
+      tolerance_abs: "1000"
+      severity: "high"
+    - id: "inv_bs_vs_tb"
+      label: "Balance sheet inventory ties to trial balance"
+      left: "balance_sheet.inventory"
+      right: "trial_balance.inventory"
+      tolerance_abs: "1000"
+      severity: "high"
+    - id: "revenue_version_conflict"
+      label: "2025 revenue consistent across submitted versions"
+      left: "financials_ttm.revenue_2025"
+      right: "financials_refreshed.revenue_2025"
+      tolerance_abs: "1000"
+      severity: "high"
+    - id: "tb_balances"
+      label: "Trial balance: total debits equal total credits"
+      left: "trial_balance.total_debits"
+      right: "trial_balance.total_credits"
+      tolerance_abs: "1"
+      severity: "critical"
+    - id: "bs_balances"
+      label: "Balance sheet balances (Assets = Liabilities + Equity)"
+      left: "balance_sheet.total_assets"
+      right: "balance_sheet.total_liabilities_equity"
+      tolerance_abs: "1000"
+      severity: "high"
+
+settings:
+  database_path: "./vfin.db"
+  data_dir: "./data"
+  artifacts_dir: "./artifacts"
+  random_seed: 42

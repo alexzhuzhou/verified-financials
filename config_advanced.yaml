@@ -1,0 +1,143 @@
+# =============================================================================
+# Verified Financials — ADVANCED / STRESS scenario.
+# Same engines, a stricter loan agreement on a distressed quarter. Turns on the
+# deeper-modeling features: NOLV inventory valuation, computed reserves,
+# cross-aging taint, a springing FCCR covenant, and equity-cure tracking.
+# =============================================================================
+
+facility:
+  borrower: "McLane-Style Distribution Holdings, LLC — Stress Case"
+  lender: "Meridian Bank, N.A."                          # the lending bank (NOT Red Lion — that's the advisor)
+  agent: "Meridian Bank, N.A., as Administrative Agent"
+  agreement_reference: "Amended & Restated Credit Agreement dated as of November 1, 2025"
+  name: "Senior Secured Revolving Credit Facility (ABL)"
+  commitment: "30000000"
+  outstanding: "18000000"
+  lc_exposure: "0"
+  currency: "USD"
+  as_of_date: "2025-12-31"
+
+borrowing_base:
+  accounts_receivable:
+    advance_rate: "0.80"
+    ineligible_rules:
+      - id: "ar_aged_90_plus"
+        label: "Receivables aged 90+ days past due"
+        type: "aged_bucket"
+        bucket_field: "90_plus"
+        citation: 'Credit Agreement §1.1 "Eligible Receivables" (d)'
+      - id: "ar_foreign_uninsured"
+        label: "Foreign account debtors without credit insurance or L/C"
+        type: "predicate"
+        predicate: "country != 'US' and not credit_insured"
+        citation: 'Credit Agreement §1.1 "Eligible Receivables" (h)'
+      - id: "ar_intercompany"
+        label: "Affiliate / intercompany receivables"
+        type: "predicate"
+        predicate: "is_affiliate == True"
+        citation: 'Credit Agreement §1.1 "Eligible Receivables" (b)'
+    cross_aging:
+      enabled: true
+      threshold_pct: "0.50"
+      citation: 'Credit Agreement §1.1 "Eligible Receivables" (e) Cross-Age'
+    concentration_cap:
+      pct: "0.15"
+      basis: "post_categorical"
+      citation: 'Credit Agreement §1.1 "Eligible Receivables" (m) Concentration Limit'
+
+  inventory:
+    advance_rate: "0.80"              # 80% of NOLV
+    valuation: "nolv"
+    nolv_by_category:
+      "Dry Goods": "0.70"
+      "Frozen": "0.65"
+      "Refrigerated": "0.50"
+      "Beverages": "0.50"
+      "Produce": "0.40"
+      "Non-Food": "0.30"
+    ineligible_rules:
+      - id: "inv_obsolete"
+        label: "Obsolete / slow-moving inventory"
+        type: "predicate"
+        predicate: "obsolete == True"
+        citation: 'Credit Agreement §1.1 "Eligible Inventory" (e)'
+
+  reserves:
+    - id: "dilution_reserve"
+      label: "Dilution reserve (returns / credits over threshold)"
+      type: "dilution"
+      dilution_pct: "0.10"
+      threshold_pct: "0.05"
+      citation: 'Credit Agreement §1.1 "Reserves" — Dilution'
+    - id: "priority_payables"
+      label: "Priority-payable reserve (unpaid sales / payroll taxes)"
+      type: "priority_payable"
+      amount: "600000"
+      citation: 'Credit Agreement §1.1 "Reserves" — Priority Payables'
+    - id: "rent_reserve"
+      label: "Rent / landlord reserve (un-waivered 3PL locations)"
+      type: "rent"
+      amount: "400000"
+      citation: 'Credit Agreement §1.1 "Reserves" — Rent'
+
+fccr:
+  covenant_threshold: "1.10"
+  numerator:
+    add: ["ebitda"]
+    subtract: ["unfinanced_capex", "cash_taxes", "distributions"]
+  denominator:
+    add: ["cash_interest", "scheduled_principal"]
+  early_warning:
+    headroom_pct_warn: "0.15"
+    declining_quarters_warn: 2
+  springing:
+    enabled: true
+    trigger_pct: "0.125"             # 12.5% of commitment
+    trigger_floor: "3000000"         # trigger = max(12.5% * commitment, $3.0M)
+    citation: 'Credit Agreement §7.1 Financial Covenant (springing)'
+  equity_cure:
+    enabled: true
+    max_per_year: 2
+    max_lifetime: 5
+    cures_used: 0
+    citation: 'Credit Agreement §8.4 Equity Cure Right'
+
+verification:
+  default_tolerance_abs: "1000"
+  checks:
+    - id: "ar_bs_vs_aging"
+      label: "Balance sheet A/R ties to A/R aging detail"
+      left: "balance_sheet.accounts_receivable"
+      right: "ar_aging.total_sum"
+      tolerance_abs: "1000"
+      severity: "high"
+    - id: "inv_bs_vs_tb"
+      label: "Balance sheet inventory ties to trial balance"
+      left: "balance_sheet.inventory"
+      right: "trial_balance.inventory"
+      tolerance_abs: "1000"
+      severity: "high"
+    - id: "revenue_version_conflict"
+      label: "2025 revenue consistent across submitted versions"
+      left: "financials_ttm.revenue_2025"
+      right: "financials_refreshed.revenue_2025"
+      tolerance_abs: "1000"
+      severity: "high"
+    - id: "tb_balances"
+      label: "Trial balance: total debits equal total credits"
+      left: "trial_balance.total_debits"
+      right: "trial_balance.total_credits"
+      tolerance_abs: "1"
+      severity: "critical"
+    - id: "bs_balances"
+      label: "Balance sheet balances (Assets = Liabilities + Equity)"
+      left: "balance_sheet.total_assets"
+      right: "balance_sheet.total_liabilities_equity"
+      tolerance_abs: "1000"
+      severity: "high"
+
+settings:
+  database_path: "./vfin_stress.db"
+  data_dir: "./data_stress"
+  artifacts_dir: "./artifacts_stress"
+  random_seed: 7
