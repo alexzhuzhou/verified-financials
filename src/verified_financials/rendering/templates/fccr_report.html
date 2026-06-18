@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}FCCR Covenant Report{% endblock %}
+{% block heading %}Fixed Charge Coverage Ratio (TTM){% endblock %}
+{% block subtitle %}Covenant compliance &amp; early-warning monitor{% endblock %}
+{% block confighash %}{{ r.run_id }}{% endblock %}
+{% block runid %}{{ r.run_id }}{% endblock %}
+
+{% block meta %}
+<table class="meta">
+  <tr><td class="k">As of</td><td class="v">{{ r.as_of_date }}</td>
+      <td class="k">Basis</td><td class="v">{{ r.basis }}</td>
+      <td class="k">Covenant</td><td class="v">{{ r.covenant | ratio }} minimum</td></tr>
+</table>
+{% endblock %}
+
+{% block content %}
+
+{% if r.springing_enabled and not r.covenant_active %}
+  <div class="callout"><span class="badge ok">NOT TESTED</span>
+    Springing covenant is dormant — excess availability {{ r.excess_availability | money }} is above the
+    {{ r.springing_trigger | money }} trigger. FCCR would be {{ r.fccr | ratio }} if tested.</div>
+{% elif r.in_compliance and not r.early_warning %}
+  <div class="callout"><span class="badge ok">IN COMPLIANCE</span>
+    FCCR of {{ r.fccr | ratio }} versus a {{ r.covenant | ratio }} covenant.</div>
+{% elif r.in_compliance and r.early_warning %}
+  <div class="callout warn"><span class="badge warn">WATCH</span>
+    Compliant at {{ r.fccr | ratio }} (covenant {{ r.covenant | ratio }}) but inside the early-warning band.</div>
+{% else %}
+  <div class="callout warn"><span class="badge bad">BREACH</span>
+    FCCR of {{ r.fccr | ratio }} is below the {{ r.covenant | ratio }} covenant{% if r.springing_enabled %}
+    (covenant active — excess availability {{ r.excess_availability | money }} below the
+    {{ r.springing_trigger | money }} trigger){% endif %}.</div>
+{% endif %}
+
+<h2 class="section">Computation</h2>
+<table class="lines">
+  <thead><tr><th>Component</th><th>Placement</th><th class="num">Amount</th></tr></thead>
+  <tbody>
+    {% for cmp in r.components %}
+    <tr><td class="label">{{ '−' if cmp.role == 'subtract' else '+' }} {{ cmp.name.replace('_',' ')|title }}</td>
+        <td class="prov">{{ cmp.side }}</td>
+        <td class="num">{{ cmp.value | money }}</td></tr>
+    {% endfor %}
+    <tr class="subtotal"><td>Numerator — FCC-adjusted EBITDA</td><td></td><td class="num">{{ r.numerator | money }}</td></tr>
+    <tr class="subtotal"><td>Denominator — Fixed Charges</td><td></td><td class="num">{{ r.denominator | money }}</td></tr>
+    <tr class="grand"><td>FCCR (TTM)</td><td></td><td class="num">{{ r.fccr | ratio }}</td></tr>
+  </tbody>
+</table>
+
+<h2 class="section">Headroom</h2>
+<table class="lines">
+  <tbody>
+    <tr><td class="label">Covenant minimum</td><td class="num">{{ r.covenant | ratio }}</td></tr>
+    <tr><td class="label">Actual FCCR</td><td class="num">{{ r.fccr | ratio }}</td></tr>
+    <tr><td class="label">Headroom (turns)</td><td class="num">{{ r.headroom_abs | ratio }}</td></tr>
+    <tr><td class="label">Headroom (% over covenant)</td><td class="num">{{ r.headroom_pct | pct }}</td></tr>
+    <tr class="subtotal"><td>EBITDA cushion before breach</td><td class="num">{{ r.ebitda_cushion | money }}</td></tr>
+  </tbody>
+</table>
+
+<h2 class="section">Quarterly Trend</h2>
+<div class="trend">
+  {% for b in bars %}
+  <div class="row">
+    <span class="q">{{ b.quarter }}</span>
+    <span class="track">
+      <span class="fill" style="width: {{ b.pct }}%;"></span>
+      <span class="cov" style="left: {{ cov_pct }}%;" title="covenant"></span>
+    </span>
+    <span class="val">{{ b.fccr | ratio }}</span>
+  </div>
+  {% endfor %}
+  <div class="prov">Red marker = {{ r.covenant | ratio }} covenant threshold.</div>
+</div>
+
+{% if r.springing_enabled %}
+<h2 class="section">Springing Covenant</h2>
+<table class="lines">
+  <tbody>
+    <tr><td class="label">Excess availability</td><td class="num">{{ r.excess_availability | money }}</td></tr>
+    <tr><td class="label">Springing trigger = max(% of commitment, floor)</td><td class="num">{{ r.springing_trigger | money }}</td></tr>
+    <tr class="subtotal"><td>Covenant currently</td>
+        <td class="num">{% if r.covenant_active %}<span class="badge bad">ACTIVE (tested)</span>{% else %}<span class="badge ok">DORMANT</span>{% endif %}</td></tr>
+  </tbody>
+</table>
+{% endif %}
+
+{% if r.equity_cure_enabled and r.covenant_active and not r.in_compliance %}
+<div class="callout warn">
+  <strong>Equity cure.</strong> An equity injection of <strong>{{ r.equity_cure_needed | money }}</strong>
+  (deemed EBITDA add-back) would restore the FCCR to the {{ r.covenant | ratio }} covenant.
+  Cures remaining: {{ r.cures_remaining_year }} this year, {{ r.cures_remaining_lifetime }} over the life of the facility.
+</div>
+{% endif %}
+
+{% if r.early_warning %}
+<div class="callout warn">
+  <strong>Early warning.</strong>
+  <ul>{% for reason in r.warning_reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+{% endblock %}

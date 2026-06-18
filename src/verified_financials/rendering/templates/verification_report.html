@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Verification Report{% endblock %}
+{% block heading %}Verification &amp; Tie-Out Report{% endblock %}
+{% block subtitle %}Reconciliation of submitted financial data{% endblock %}
+{% block confighash %}{{ r.run_id }}{% endblock %}
+{% block runid %}{{ r.run_id }}{% endblock %}
+
+{% block meta %}
+<table class="meta">
+  <tr><td class="k">As of</td><td class="v">{{ r.as_of_date }}</td>
+      <td class="k">Checks passed</td><td class="v">{{ r.passed }}</td>
+      <td class="k">Exceptions</td><td class="v">{{ r.failed }}</td></tr>
+</table>
+{% endblock %}
+
+{% block content %}
+{% if r.failed %}
+<div class="callout warn">
+  <strong>{{ r.failed }} reconciliation exception{{ 's' if r.failed != 1 }}</strong> found across submitted files.
+  Each is traced to the conflicting source figures below.
+</div>
+{% else %}
+<div class="callout">All tie-out checks passed within tolerance.</div>
+{% endif %}
+
+<table class="lines">
+  <thead>
+    <tr><th>Check</th><th>Status</th><th class="num">Left</th><th class="num">Right</th><th class="num">Δ</th></tr>
+  </thead>
+  <tbody>
+    {% for f in r.findings %}
+    <tr>
+      <td class="label"><strong>{{ f.label }}</strong>
+        <div class="prov">{{ f.left.ref }}: {{ f.left.source_file }} · {{ f.left.source_locator }}{% if f.left.version_tag %} ({{ f.left.version_tag }}){% endif %}</div>
+        <div class="prov">{{ f.right.ref }}: {{ f.right.source_file }} · {{ f.right.source_locator }}{% if f.right.version_tag %} ({{ f.right.version_tag }}){% endif %}</div>
+      </td>
+      <td>
+        {% if f.status == 'pass' %}<span class="badge ok">PASS</span>
+        {% else %}<span class="badge bad">{{ f.severity|upper }}</span>{% endif %}
+      </td>
+      <td class="num">{{ f.left.value | money }}</td>
+      <td class="num">{{ f.right.value | money }}</td>
+      <td class="num">{{ f.delta | money }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

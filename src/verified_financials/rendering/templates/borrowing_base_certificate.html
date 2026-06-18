@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Borrowing Base Certificate{% endblock %}
+{% block heading %}Borrowing Base Certificate{% endblock %}
+{% block subtitle %}{{ c.facility_name }}{% endblock %}
+{% block confighash %}{{ c.config_hash[:12] }}{% endblock %}
+{% block runid %}{{ c.run_id }}{% endblock %}
+
+{% block meta %}
+<table class="meta">
+  <tr><td class="k">Borrower</td><td class="v">{{ c.borrower }}</td>
+      <td class="k">Certificate No.</td><td class="v">{{ c.certificate_no }}</td></tr>
+  <tr><td class="k">Collateral as of</td><td class="v" colspan="3">{{ c.as_of_date }}</td></tr>
+  <tr><td class="k">Agreement</td><td class="v" colspan="3">{{ c.agreement_reference }}</td></tr>
+</table>
+{% endblock %}
+
+{% block content %}
+
+{% macro asset_section(a, letter, title) %}
+<h2 class="section">{{ letter }}. {{ title }}</h2>
+<table class="lines">
+  <thead><tr><th>Line</th><th class="num">Amount</th></tr></thead>
+  <tbody>
+    <tr><td class="label">Gross {{ title }}</td><td class="num">{{ a.gross | money }}</td></tr>
+    {% for line in a.ineligibles %}
+    <tr class="indent"><td class="label">Less: {{ line.label }}
+        <div class="cite">{{ line.citation }}</div></td>
+        <td class="num">({{ line.amount | money }})</td></tr>
+    {% endfor %}
+    {% for cl in a.concentration %}
+    <tr class="indent"><td class="label">Less: Concentration excess — {{ cl.customer }}
+        ({{ cl.pct_of_gross | pct }} of gross; cap {{ cl.cap_amount | money }})</td>
+        <td class="num">({{ cl.excess_excluded | money }})</td></tr>
+    {% endfor %}
+    <tr class="subtotal"><td>Eligible {{ title }}{% if a.valuation_basis == 'nolv' %} (at cost){% endif %}</td><td class="num">{{ a.eligible | money }}</td></tr>
+    {% if a.nolv_detail %}
+    {% for n in a.nolv_detail %}
+    <tr class="indent"><td class="label">NOLV — {{ n.category }} (cost {{ n.cost | money }} × {{ n.nolv_ratio | pct(0) }})</td>
+        <td class="num">{{ n.nolv_value | money }}</td></tr>
+    {% endfor %}
+    <tr class="subtotal"><td>Net Orderly Liquidation Value</td><td class="num">{{ a.eligible_nolv_value | money }}</td></tr>
+    {% endif %}
+    <tr><td class="label">Advance rate{% if a.valuation_basis == 'nolv' %} (of NOLV){% endif %}</td><td class="num">{{ a.advance_rate | pct(0) }}</td></tr>
+    <tr class="subtotal"><td>{{ title }} Availability</td><td class="num">{{ a.availability | money }}</td></tr>
+  </tbody>
+</table>
+{% endmacro %}
+
+{{ asset_section(c.accounts_receivable, "A", "Accounts Receivable") }}
+{{ asset_section(c.inventory, "B", "Inventory") }}
+
+<h2 class="section">C. Borrowing Base Roll-Up</h2>
+<table class="lines">
+  <tbody>
+    <tr><td class="label">A/R Availability</td><td class="num">{{ c.accounts_receivable.availability | money }}</td></tr>
+    <tr><td class="label">Inventory Availability</td><td class="num">{{ c.inventory.availability | money }}</td></tr>
+    <tr class="subtotal"><td>Gross Availability</td><td class="num">{{ c.gross_availability | money }}</td></tr>
+    {% for r in c.reserve_detail %}
+    <tr class="indent"><td class="label">Less: {{ r.label }}</td><td class="num">({{ r.amount | money }})</td></tr>
+    {% endfor %}
+    {% if not c.reserve_detail %}
+    <tr class="indent"><td class="label">Less: Reserves</td><td class="num">({{ c.reserves_total | money }})</td></tr>
+    {% endif %}
+    <tr class="subtotal"><td>Borrowing Base</td><td class="num">{{ c.borrowing_base | money }}</td></tr>
+  </tbody>
+</table>
+
+<h2 class="section">D. Commitment Cap &amp; Availability</h2>
+<table class="lines">
+  <tbody>
+    <tr><td class="label">Revolver Commitment</td><td class="num">{{ c.commitment | money }}</td></tr>
+    <tr><td class="label">Borrowing Base</td><td class="num">{{ c.borrowing_base | money }}</td></tr>
+    <tr class="subtotal"><td>Line Cap (lesser of) — binding: {{ c.binding_constraint.replace('_',' ') }}</td>
+        <td class="num">{{ c.borrowing_base | money }}</td></tr>
+    <tr class="indent"><td class="label">Less: Outstanding Revolving Loans</td><td class="num">({{ c.outstanding | money }})</td></tr>
+    <tr class="indent"><td class="label">Less: Letter-of-Credit Exposure</td><td class="num">({{ c.lc_exposure | money }})</td></tr>
+    <tr class="grand"><td>Excess (Net) Availability</td><td class="num">{{ c.excess_availability | money }}</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  The borrower presents <strong>{{ c.gross_availability | money }}</strong> of gross collateral availability
+  against a <strong>{{ c.commitment | money }}</strong> revolver. After eligibility rules, the borrowing base is
+  <strong>{{ c.borrowing_base | money }}</strong>; with <strong>{{ c.outstanding | money }}</strong> drawn, only
+  <strong>{{ c.excess_availability | money }}</strong> of additional availability remains.
+  {% if c.suppressed_availability and c.suppressed_availability|float > 0 %}
+  Suppressed availability (collateral above the commitment): {{ c.suppressed_availability | money }}.
+  {% endif %}
+</div>
+
+<div class="sig">
+  The undersigned Responsible Officer certifies that the foregoing is true, correct and complete
+  in all material respects as of the collateral date stated above.
+  <div class="rule">Chief Financial Officer &nbsp;·&nbsp; {{ c.borrower }}</div>
+</div>
+{% endblock %}

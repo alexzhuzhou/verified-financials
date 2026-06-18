@@ -1,0 +1,68 @@
+"""Jinja2 rendering of the engine DTOs into styled, print-to-PDF HTML."""
+
+from __future__ import annotations
+
+from decimal import Decimal, InvalidOperation
+
+from jinja2 import Environment, PackageLoader, select_autoescape
+
+
+def _money(value, dp: int = 2) -> str:
+    if value in (None, ""):
+        return "—"
+    try:
+        d = Decimal(str(value))
+    except (InvalidOperation, ValueError):
+        return str(value)
+    sign = "-" if d < 0 else ""
+    return f"{sign}${abs(d):,.{dp}f}"
+
+
+def _ratio(value) -> str:
+    try:
+        return f"{Decimal(str(value)):.2f}x"
+    except (InvalidOperation, ValueError):
+        return str(value)
+
+
+def _pct(value, dp: int = 1) -> str:
+    try:
+        return f"{Decimal(str(value)) * 100:.{dp}f}%"
+    except (InvalidOperation, ValueError):
+        return str(value)
+
+
+def _build_env() -> Environment:
+    env = Environment(
+        loader=PackageLoader("verified_financials.rendering", "templates"),
+        autoescape=select_autoescape(["html"]),
+    )
+    env.filters["money"] = _money
+    env.filters["ratio"] = _ratio
+    env.filters["pct"] = _pct
+    return env
+
+
+_ENV = _build_env()
+
+
+def render_certificate(cert: dict) -> str:
+    return _ENV.get_template("borrowing_base_certificate.html").render(c=cert)
+
+
+def render_verification(report: dict) -> str:
+    return _ENV.get_template("verification_report.html").render(r=report)
+
+
+def render_fccr(report: dict) -> str:
+    # precompute trend bar widths (max ratio -> 100%) for a print-friendly chart
+    trend = report.get("trend", [])
+    ratios = [Decimal(str(p["fccr"])) for p in trend] or [Decimal("1")]
+    hi = max(ratios) * Decimal("1.05")
+    bars = []
+    for p in trend:
+        r = Decimal(str(p["fccr"]))
+        bars.append({"quarter": p["quarter"], "fccr": p["fccr"], "pct": float(r / hi * 100)})
+    covenant = Decimal(str(report["covenant"]))
+    cov_pct = float(covenant / hi * 100)
+    return _ENV.get_template("fccr_report.html").render(r=report, bars=bars, cov_pct=cov_pct)
