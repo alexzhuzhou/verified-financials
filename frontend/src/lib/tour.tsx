@@ -23,7 +23,7 @@ export interface TourStep {
  */
 export const TOUR: TourStep[] = [
   {
-    route: "/",
+    route: "/app",
     scenario: "baseline",
     highlight: "tour-kpis",
     title: "What this tool does",
@@ -38,7 +38,7 @@ export const TOUR: TourStep[] = [
     ),
   },
   {
-    route: "/verification",
+    route: "/app/verification",
     scenario: "baseline",
     highlight: "tour-verification-summary",
     title: "Tie-out & verification",
@@ -52,7 +52,7 @@ export const TOUR: TourStep[] = [
     ),
   },
   {
-    route: "/borrowing-base",
+    route: "/app/borrowing-base",
     scenario: "baseline",
     highlight: "tour-waterfall",
     title: "The borrowing-base engine",
@@ -66,7 +66,7 @@ export const TOUR: TourStep[] = [
     ),
   },
   {
-    route: "/borrowing-base",
+    route: "/app/borrowing-base",
     scenario: "baseline",
     highlight: "tour-certificate-actions",
     title: "A bank-ready certificate, live",
@@ -79,7 +79,7 @@ export const TOUR: TourStep[] = [
     ),
   },
   {
-    route: "/fccr",
+    route: "/app/fccr",
     scenario: "baseline",
     highlight: "tour-fccr-trend",
     title: "Covenant monitoring",
@@ -93,7 +93,7 @@ export const TOUR: TourStep[] = [
     ),
   },
   {
-    route: "/fccr",
+    route: "/app/fccr",
     scenario: "stress",
     highlight: "tour-fccr-trend",
     title: "Scenario stress-testing",

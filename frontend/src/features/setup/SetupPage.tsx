@@ -42,7 +42,7 @@ export function SetupPage() {
     setBusy(false);
     if (res.ok) {
       setUpload(res.uploadId);
-      navigate("/");
+      navigate("/app");
     } else {
       setErrors(res.errors);
     }

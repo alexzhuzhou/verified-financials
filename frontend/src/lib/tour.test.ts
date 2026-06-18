@@ -3,13 +3,13 @@ import { describe, expect, it } from "vitest";
 import { TOUR } from "./tour";
 
 const ROUTES = new Set([
-  "/",
-  "/briefing",
-  "/verification",
-  "/borrowing-base",
-  "/fccr",
-  "/compare",
-  "/setup",
+  "/app",
+  "/app/briefing",
+  "/app/verification",
+  "/app/borrowing-base",
+  "/app/fccr",
+  "/app/compare",
+  "/app/setup",
 ]);
 
 describe("guided tour script", () => {
@@ -27,7 +27,7 @@ describe("guided tour script", () => {
   });
 
   it("opens on the baseline overview and ends on the stress FCCR breach", () => {
-    expect(TOUR[0]).toMatchObject({ route: "/", scenario: "baseline" });
-    expect(TOUR[TOUR.length - 1]).toMatchObject({ route: "/fccr", scenario: "stress" });
+    expect(TOUR[0]).toMatchObject({ route: "/app", scenario: "baseline" });
+    expect(TOUR[TOUR.length - 1]).toMatchObject({ route: "/app/fccr", scenario: "stress" });
   });
 });

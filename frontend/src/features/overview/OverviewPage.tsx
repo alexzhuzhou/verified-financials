@@ -100,13 +100,13 @@ export function OverviewPage() {
       <WaterfallChart cert={bb} />
 
       <div className="flex flex-wrap gap-4 text-sm">
-        <Link to="/verification" className="inline-flex items-center gap-1 text-primary hover:underline">
+        <Link to="/app/verification" className="inline-flex items-center gap-1 text-primary hover:underline">
           Verification findings <ArrowRight className="h-3.5 w-3.5" />
         </Link>
-        <Link to="/borrowing-base" className="inline-flex items-center gap-1 text-primary hover:underline">
+        <Link to="/app/borrowing-base" className="inline-flex items-center gap-1 text-primary hover:underline">
           Borrowing base certificate <ArrowRight className="h-3.5 w-3.5" />
         </Link>
-        <Link to="/fccr" className="inline-flex items-center gap-1 text-primary hover:underline">
+        <Link to="/app/fccr" className="inline-flex items-center gap-1 text-primary hover:underline">
           FCCR covenant <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>

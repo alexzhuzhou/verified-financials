@@ -6,13 +6,15 @@ import { CertificatePage } from "./features/borrowing-base/CertificatePage";
 import { BriefingPage } from "./features/briefing/BriefingPage";
 import { ComparePage } from "./features/compare/ComparePage";
 import { FccrPage } from "./features/fccr/FccrPage";
+import { LandingPage } from "./features/landing/LandingPage";
 import { OverviewPage } from "./features/overview/OverviewPage";
 import { SetupPage } from "./features/setup/SetupPage";
 import { VerificationPage } from "./features/verification/VerificationPage";
 
 export const router = createBrowserRouter([
+  { path: "/", element: <LandingPage /> },
   {
-    path: "/",
+    path: "/app",
     element: <AppLayout />,
     errorElement: <RouteError />,
     children: [
@@ -23,7 +25,7 @@ export const router = createBrowserRouter([
       { path: "fccr", element: <FccrPage /> },
       { path: "compare", element: <ComparePage /> },
       { path: "setup", element: <SetupPage /> },
-      { path: "*", element: <Navigate to="/" replace /> },
     ],
   },
+  { path: "*", element: <Navigate to="/" replace /> },
 ]);

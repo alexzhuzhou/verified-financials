@@ -12,13 +12,13 @@ import { cn } from "@/lib/utils";
 const GUIDE_SEEN_KEY = "vfin_guide_seen";
 
 const NAV = [
-  { to: "/", label: "Overview", icon: LayoutDashboard, end: true },
-  { to: "/briefing", label: "Advisor Briefing", icon: Sparkles, end: false },
-  { to: "/verification", label: "Verification", icon: ShieldCheck, end: false },
-  { to: "/borrowing-base", label: "Borrowing Base", icon: ScrollText, end: false },
-  { to: "/fccr", label: "FCCR Covenant", icon: FileBarChart, end: false },
-  { to: "/compare", label: "Compare", icon: GitCompare, end: false },
-  { to: "/setup", label: "Upload Data", icon: Upload, end: false },
+  { to: "/app", label: "Overview", icon: LayoutDashboard, end: true },
+  { to: "/app/briefing", label: "Advisor Briefing", icon: Sparkles, end: false },
+  { to: "/app/verification", label: "Verification", icon: ShieldCheck, end: false },
+  { to: "/app/borrowing-base", label: "Borrowing Base", icon: ScrollText, end: false },
+  { to: "/app/fccr", label: "FCCR Covenant", icon: FileBarChart, end: false },
+  { to: "/app/compare", label: "Compare", icon: GitCompare, end: false },
+  { to: "/app/setup", label: "Upload Data", icon: Upload, end: false },
 ];
 
 export function AppLayout() {

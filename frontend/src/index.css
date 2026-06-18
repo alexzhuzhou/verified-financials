@@ -71,3 +71,94 @@
   70%  { box-shadow: 0 0 0 10px hsl(var(--ring) / 0); }
   100% { box-shadow: 0 0 0 0 hsl(var(--ring) / 0); }
 }
+
+/* ===== Verified Financials — Landing (Dark Cinematic) ===== */
+
+/* Scroll-reveal: hidden until .is-in is added */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 900ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Frosted product frames sit slightly tilted, then settle when revealed */
+.frame-tilt {
+  transform: perspective(1600px) rotateX(7deg) translateY(34px) scale(0.97);
+  opacity: 0;
+  transition: opacity 1000ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 1100ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.frame-tilt.is-in {
+  transform: perspective(1600px) rotateX(0deg) translateY(0) scale(1);
+  opacity: 1;
+}
+
+/* Slow drifting grid backdrop in the hero */
+@keyframes vf-grid-drift {
+  0%   { background-position: 0 0, 0 0; }
+  100% { background-position: 80px 80px, 80px 80px; }
+}
+.vf-grid {
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.045) 1px, transparent 1px);
+  background-size: 80px 80px, 80px 80px;
+  animation: vf-grid-drift 22s linear infinite;
+}
+
+/* Light sheen sweeping across the hero headline */
+@keyframes vf-sheen {
+  0%   { background-position: -150% 0; }
+  60%  { background-position: 250% 0; }
+  100% { background-position: 250% 0; }
+}
+.vf-sheen {
+  background: linear-gradient(
+    100deg,
+    rgba(255,255,255,0) 38%,
+    rgba(255,255,255,0.55) 50%,
+    rgba(255,255,255,0) 62%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: vf-sheen 6.5s ease-in-out 0.6s infinite;
+  pointer-events: none;
+}
+
+/* Slow rotation for the giant watermark mark */
+@keyframes vf-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.vf-spin-slow {
+  animation: vf-spin 120s linear infinite;
+}
+
+/* Glowing, breathing maroon CTA */
+@keyframes vf-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(138,28,28,0.55), 0 10px 30px -8px rgba(138,28,28,0.6); }
+  50%      { box-shadow: 0 0 0 8px rgba(138,28,28,0), 0 14px 40px -6px rgba(138,28,28,0.8); }
+}
+.vf-cta-glow {
+  animation: vf-glow 3.2s ease-in-out infinite;
+}
+
+/* Soft radial spotlight used behind the hero card */
+.vf-spotlight {
+  background: radial-gradient(60% 60% at 50% 0%, rgba(138,28,28,0.55) 0%, rgba(138,28,28,0) 70%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .frame-tilt { transition: none; opacity: 1; transform: none; }
+  .vf-grid, .vf-sheen, .vf-spin-slow, .vf-cta-glow { animation: none; }
+  .vf-sheen { color: inherit; -webkit-text-fill-color: inherit; }
+}
