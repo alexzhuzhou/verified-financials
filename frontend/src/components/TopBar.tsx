@@ -1,5 +1,7 @@
 import { HelpCircle, PlayCircle, RotateCcw } from "lucide-react";
+import { Link } from "react-router-dom";
 
+import wordmark from "@/assets/brand/wordmark.png";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,12 +20,10 @@ export function TopBar() {
 
   return (
     <header className="no-print flex items-center justify-between border-b bg-background px-6 py-3">
-      <div>
-        <div className="font-serif text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
-          Red Lion Advisory
-        </div>
+      <Link to="/app" className="block">
+        <img src={wordmark} alt="Red Lion Advisory" className="mb-1 h-7 w-auto" />
         <div className="font-serif text-xl font-semibold">Verified Financials</div>
-      </div>
+      </Link>
 
       <div className="flex items-center gap-3">
         {hasOverrides && (

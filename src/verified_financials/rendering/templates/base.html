@@ -25,6 +25,7 @@
   }
   .firm { font-variant: small-caps; letter-spacing: .08em; color: var(--brand);
           font-weight: bold; font-size: 13px; }
+  .brand-logo { height: 34px; width: auto; display: block; margin-bottom: 8px; }
   h1 { font-size: 22px; margin: 6px 0 2px; }
   .subtitle { color: var(--muted); font-size: 13px; }
   .meta { width: 100%; font-size: 12px; color: var(--muted); margin-top: 12px;
@@ -79,7 +80,8 @@
 <body>
 <div class="sheet">
   <header class="doc">
-    <div class="firm">Red Lion Advisory &nbsp;·&nbsp; Verified Financials</div>
+    {% if brand_logo %}<img class="brand-logo" src="{{ brand_logo }}" alt="Red Lion Advisory">{% endif %}
+    <div class="firm">{% if not brand_logo %}Red Lion Advisory &nbsp;·&nbsp; {% endif %}Verified Financials</div>
     <h1>{% block heading %}{% endblock %}</h1>
     <div class="subtitle">{% block subtitle %}{% endblock %}</div>
     {% block meta %}{% endblock %}

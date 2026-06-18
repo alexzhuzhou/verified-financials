@@ -34,7 +34,7 @@ vfin = "verified_financials.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-verified_financials = ["rendering/templates/*.html"]
+verified_financials = ["rendering/templates/*.html", "rendering/assets/*.png"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

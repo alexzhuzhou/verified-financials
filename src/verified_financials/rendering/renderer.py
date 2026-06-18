@@ -2,9 +2,21 @@
 
 from __future__ import annotations
 
+import base64
 from decimal import Decimal, InvalidOperation
+from pathlib import Path
 
 from jinja2 import Environment, PackageLoader, select_autoescape
+
+
+def _brand_logo_data_uri() -> str:
+    """The Red Lion wordmark as an inline data URI so rendered/printed/downloaded
+    HTML is self-contained (no external image fetch)."""
+    path = Path(__file__).parent / "assets" / "wordmark.png"
+    try:
+        return "data:image/png;base64," + base64.b64encode(path.read_bytes()).decode()
+    except OSError:
+        return ""
 
 
 def _money(value, dp: int = 2) -> str:
@@ -40,6 +52,7 @@ def _build_env() -> Environment:
     env.filters["money"] = _money
     env.filters["ratio"] = _ratio
     env.filters["pct"] = _pct
+    env.globals["brand_logo"] = _brand_logo_data_uri()
     return env
 
 

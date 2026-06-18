@@ -148,6 +148,9 @@ def build() -> Document:
         cap.paragraph_format.space_after = Pt(12)
 
     # ---------------------------------------------------------------- title
+    if (IMG_DIR / "red-lion-wordmark.png").exists():
+        doc.add_picture(str(IMG_DIR / "red-lion-wordmark.png"), width=Inches(2.6))
+        doc.paragraphs[-1].paragraph_format.space_after = Pt(10)
     title = doc.add_paragraph()
     title.alignment = WD_ALIGN_PARAGRAPH.LEFT
     r = title.add_run("Verified Financials")
