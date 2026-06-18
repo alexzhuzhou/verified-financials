@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 30% 16%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 30% 16%;
+    --muted: 210 30% 96%;
+    --muted-foreground: 215 16% 42%;
+    --accent: 210 30% 94%;
+    --accent-foreground: 222 30% 16%;
+    --secondary: 210 30% 95%;
+    --secondary-foreground: 222 30% 16%;
+    --border: 214 24% 86%;
+    --input: 214 24% 86%;
+    --ring: 0 66% 33%;
+
+    /* Red Lion brand */
+    --primary: 0 66% 33%;
+    --primary-foreground: 0 0% 98%;
+
+    /* status */
+    --ok: 145 63% 30%;
+    --ok-bg: 145 50% 94%;
+    --warn: 38 92% 32%;
+    --warn-bg: 42 90% 92%;
+    --bad: 2 72% 41%;
+    --bad-bg: 2 80% 96%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-muted/40 text-foreground font-sans;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, .serif {
+    @apply font-serif;
+  }
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* The certificate prints clean (bank deliverable reflecting live what-if). */
+@media print {
+  body { background: #fff; }
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  main { padding: 0 !important; }
+  @page { size: letter; margin: 0.6in; }
+}
+.print-only { display: none; }
+
+/* Guided presenter tour: soft, non-shifting ring on the step's focal element. */
+.tour-highlight {
+  border-radius: var(--radius);
+  scroll-margin: 96px;
+  animation: tour-pulse 1.1s ease-out 2;
+}
+@keyframes tour-pulse {
+  0%   { box-shadow: 0 0 0 0 hsl(var(--ring) / 0.55); }
+  70%  { box-shadow: 0 0 0 10px hsl(var(--ring) / 0); }
+  100% { box-shadow: 0 0 0 0 hsl(var(--ring) / 0); }
+}
