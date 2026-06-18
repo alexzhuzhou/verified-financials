@@ -1,0 +1,17 @@
+# Render Blueprint — single Docker web service (API + built SPA at one URL).
+# Render → New → Blueprint → pick this repo. Set OPENAI_API_KEY in the dashboard.
+services:
+  - type: web
+    name: verified-financials
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # AI advisor briefing is optional — the app falls back to a deterministic
+      # memo when this is unset. Set the value as a secret in the dashboard.
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini

@@ -1,0 +1,39 @@
+# Keep the build context small and never bake secrets / generated artifacts.
+
+# deps & build output (rebuilt inside the image)
+**/node_modules
+**/dist
+*.egg-info/
+.venv/
+venv/
+
+# vcs / caches / editor
+.git/
+.gitignore
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+.DS_Store
+
+# secrets / env — including frontend/.env (its VITE_API_BASE must NOT bake in;
+# the SPA must build for same-origin).
+.env
+.env.*
+**/.env
+**/.env.*
+
+# generated / runtime data (regenerated on demand; baked fresh in the image)
+*.db
+/data/*.csv
+/data_stress/*.csv
+/artifacts*/
+/uploads/
+
+# docs / misc not needed at runtime
+*.docx
+~$*
+docs/
+scripts/
+tests/
