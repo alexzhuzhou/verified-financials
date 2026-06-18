@@ -1,0 +1,133 @@
+{
+  "as_of_date": "2025-12-31",
+  "failed": 3,
+  "findings": [
+    {
+      "check_id": "ar_bs_vs_aging",
+      "delta": "200000",
+      "label": "Balance sheet A/R ties to A/R aging detail",
+      "left": {
+        "as_of_date": "2025-12-31",
+        "ref": "balance_sheet.accounts_receivable",
+        "source_file": "balance_sheet.csv",
+        "source_locator": "row 3",
+        "value": "30200000",
+        "version_tag": null
+      },
+      "message": "$200,000.00 discrepancy: balance_sheet.accounts_receivable = $30,200,000.00 vs ar_aging.total_sum = $30,000,000.00",
+      "right": {
+        "as_of_date": "2025-12-31",
+        "ref": "ar_aging.total_sum",
+        "source_file": "ar_aging.csv",
+        "source_locator": "sum of 16 customer rows",
+        "value": "30000000",
+        "version_tag": null
+      },
+      "severity": "high",
+      "status": "fail",
+      "tolerance_abs": "1000"
+    },
+    {
+      "check_id": "inv_bs_vs_tb",
+      "delta": "-500000",
+      "label": "Balance sheet inventory ties to trial balance",
+      "left": {
+        "as_of_date": "2025-12-31",
+        "ref": "balance_sheet.inventory",
+        "source_file": "balance_sheet.csv",
+        "source_locator": "row 4",
+        "value": "20000000",
+        "version_tag": null
+      },
+      "message": "$500,000.00 discrepancy: balance_sheet.inventory = $20,000,000.00 vs trial_balance.inventory = $20,500,000.00",
+      "right": {
+        "as_of_date": "2025-12-31",
+        "ref": "trial_balance.inventory",
+        "source_file": "trial_balance.csv",
+        "source_locator": "row 4",
+        "value": "20500000",
+        "version_tag": null
+      },
+      "severity": "high",
+      "status": "fail",
+      "tolerance_abs": "1000"
+    },
+    {
+      "check_id": "revenue_version_conflict",
+      "delta": "1300000",
+      "label": "2025 revenue consistent across submitted versions",
+      "left": {
+        "as_of_date": "2025-12-31",
+        "ref": "financials_ttm.revenue_2025",
+        "source_file": "financials_ttm.csv",
+        "source_locator": "row 8",
+        "value": "182400000",
+        "version_tag": "original"
+      },
+      "message": "$1,300,000.00 discrepancy: financials_ttm.revenue_2025 = $182,400,000.00 vs financials_refreshed.revenue_2025 = $181,100,000.00 \u2014 'original' vs 'refreshed_2025-12-15'",
+      "right": {
+        "as_of_date": "2025-12-31",
+        "ref": "financials_refreshed.revenue_2025",
+        "source_file": "financials_2025_refreshed.csv",
+        "source_locator": "row 2",
+        "value": "181100000",
+        "version_tag": "refreshed_2025-12-15"
+      },
+      "severity": "high",
+      "status": "fail",
+      "tolerance_abs": "1000"
+    },
+    {
+      "check_id": "tb_balances",
+      "delta": "0",
+      "label": "Trial balance: total debits equal total credits",
+      "left": {
+        "as_of_date": "2025-12-31",
+        "ref": "trial_balance.total_debits",
+        "source_file": "trial_balance.csv",
+        "source_locator": "sum of debit column (14 accounts)",
+        "value": "118500000",
+        "version_tag": null
+      },
+      "message": "Ties out within tolerance (\u0394 $0.00)",
+      "right": {
+        "as_of_date": "2025-12-31",
+        "ref": "trial_balance.total_credits",
+        "source_file": "trial_balance.csv",
+        "source_locator": "sum of credit column (14 accounts)",
+        "value": "118500000",
+        "version_tag": null
+      },
+      "severity": "critical",
+      "status": "pass",
+      "tolerance_abs": "1"
+    },
+    {
+      "check_id": "bs_balances",
+      "delta": "0",
+      "label": "Balance sheet balances (Assets = Liabilities + Equity)",
+      "left": {
+        "as_of_date": "2025-12-31",
+        "ref": "balance_sheet.total_assets",
+        "source_file": "balance_sheet.csv",
+        "source_locator": "row 9",
+        "value": "118000000",
+        "version_tag": null
+      },
+      "message": "Ties out within tolerance (\u0394 $0.00)",
+      "right": {
+        "as_of_date": "2025-12-31",
+        "ref": "balance_sheet.total_liabilities_equity",
+        "source_file": "balance_sheet.csv",
+        "source_locator": "row 17",
+        "value": "118000000",
+        "version_tag": null
+      },
+      "severity": "high",
+      "status": "pass",
+      "tolerance_abs": "1000"
+    }
+  ],
+  "passed": 2,
+  "run_id": "GOLDEN"
+}

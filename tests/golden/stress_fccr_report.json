@@ -1,0 +1,86 @@
+{
+  "as_of_date": "2025-12-31",
+  "basis": "TTM",
+  "components": [
+    {
+      "fact_id": "financials_ttm:_:ebitda:original",
+      "name": "ebitda",
+      "role": "add",
+      "side": "numerator",
+      "value": "14000000"
+    },
+    {
+      "fact_id": "financials_ttm:_:unfinanced_capex:original",
+      "name": "unfinanced_capex",
+      "role": "subtract",
+      "side": "numerator",
+      "value": "3000000"
+    },
+    {
+      "fact_id": "financials_ttm:_:cash_taxes:original",
+      "name": "cash_taxes",
+      "role": "subtract",
+      "side": "numerator",
+      "value": "2000000"
+    },
+    {
+      "fact_id": "financials_ttm:_:distributions:original",
+      "name": "distributions",
+      "role": "subtract",
+      "side": "numerator",
+      "value": "1000000"
+    },
+    {
+      "fact_id": "financials_ttm:_:cash_interest:original",
+      "name": "cash_interest",
+      "role": "add",
+      "side": "denominator",
+      "value": "5000000"
+    },
+    {
+      "fact_id": "financials_ttm:_:scheduled_principal:original",
+      "name": "scheduled_principal",
+      "role": "add",
+      "side": "denominator",
+      "value": "4000000"
+    }
+  ],
+  "consecutive_declines": 2,
+  "covenant": "1.10",
+  "covenant_active": true,
+  "cures_remaining_lifetime": 5,
+  "cures_remaining_year": 2,
+  "cures_used": 0,
+  "denominator": "9000000.00",
+  "early_warning": true,
+  "ebitda_cushion": "-1900000.00",
+  "equity_cure_enabled": true,
+  "equity_cure_needed": "1900000.00",
+  "excess_availability": "1750000.00",
+  "fccr": "0.89",
+  "headroom_abs": "-0.21",
+  "headroom_pct": "-0.1909",
+  "in_compliance": false,
+  "numerator": "8000000.00",
+  "run_id": "GOLDEN",
+  "springing_enabled": true,
+  "springing_trigger": "3750000.00",
+  "trend": [
+    {
+      "fccr": "1.15",
+      "quarter": "Q2-2025"
+    },
+    {
+      "fccr": "1.02",
+      "quarter": "Q3-2025"
+    },
+    {
+      "fccr": "0.89",
+      "quarter": "Q4-2025"
+    }
+  ],
+  "warning_reasons": [
+    "Headroom only -19.1% above covenant (warning band 15%)",
+    "FCCR declined 2 consecutive quarters (1.15x \u2192 1.02x \u2192 0.89x)"
+  ]
+}

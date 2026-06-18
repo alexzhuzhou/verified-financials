@@ -1,0 +1,205 @@
+{
+  "accounts_receivable": {
+    "advance_rate": "0.80",
+    "asset_class": "accounts_receivable",
+    "availability": "13600000.00",
+    "concentration": [
+      {
+        "balance_in_base": "6000000.00",
+        "cap_amount": "3000000.00",
+        "customer": "BigBox Wholesale Group",
+        "excess_excluded": "3000000.00",
+        "pct_of_base": "0.3000",
+        "pct_of_gross": "0.2400"
+      }
+    ],
+    "eligible": "17000000.00",
+    "eligible_nolv_value": null,
+    "gross": "25000000.00",
+    "ineligibles": [
+      {
+        "amount": "1000000.00",
+        "citation": "Credit Agreement \u00a71.1 \"Eligible Receivables\" (d)",
+        "detail": [
+          {
+            "amount": "200000.00",
+            "entity": "Coastal Convenience",
+            "fact_id": "ar_aging:Coastal Convenience:total",
+            "note": ""
+          },
+          {
+            "amount": "300000.00",
+            "entity": "Mountain Cold Foods",
+            "fact_id": "ar_aging:Mountain Cold Foods:total",
+            "note": ""
+          },
+          {
+            "amount": "200000.00",
+            "entity": "QuickServe Foodservice",
+            "fact_id": "ar_aging:QuickServe Foodservice:total",
+            "note": ""
+          },
+          {
+            "amount": "300000.00",
+            "entity": "Regional Grocers Alliance",
+            "fact_id": "ar_aging:Regional Grocers Alliance:total",
+            "note": ""
+          }
+        ],
+        "label": "Receivables aged 90+ days past due",
+        "rule_id": "ar_aged_90_plus"
+      },
+      {
+        "amount": "1500000.00",
+        "citation": "Credit Agreement \u00a71.1 \"Eligible Receivables\" (h)",
+        "detail": [
+          {
+            "amount": "1500000.00",
+            "entity": "Andes Provisions - Chile",
+            "fact_id": "ar_aging:Andes Provisions - Chile:total",
+            "note": ""
+          }
+        ],
+        "label": "Foreign account debtors without credit insurance or L/C",
+        "rule_id": "ar_foreign_uninsured"
+      },
+      {
+        "amount": "1000000.00",
+        "citation": "Credit Agreement \u00a71.1 \"Eligible Receivables\" (b)",
+        "detail": [
+          {
+            "amount": "1000000.00",
+            "entity": "McLane Logistics International",
+            "fact_id": "ar_aging:McLane Logistics International:total",
+            "note": ""
+          }
+        ],
+        "label": "Affiliate / intercompany receivables",
+        "rule_id": "ar_intercompany"
+      },
+      {
+        "amount": "1500000.00",
+        "citation": "Credit Agreement \u00a71.1 \"Eligible Receivables\" (e) Cross-Age",
+        "detail": [
+          {
+            "amount": "1500000.00",
+            "entity": "Sunset Diners Group",
+            "fact_id": "ar_aging:Sunset Diners Group:total",
+            "note": "majority of balance past due"
+          }
+        ],
+        "label": "Cross-aged obligors (majority past due)",
+        "rule_id": "ar_cross_aging"
+      }
+    ],
+    "nolv_detail": [],
+    "total_ineligible": "8000000.00",
+    "valuation_basis": "cost"
+  },
+  "agent": "Meridian Bank, N.A., as Administrative Agent",
+  "agreement_reference": "Amended & Restated Credit Agreement dated as of November 1, 2025",
+  "as_of_date": "2025-12-31",
+  "binding_constraint": "borrowing_base",
+  "borrower": "McLane-Style Distribution Holdings, LLC \u2014 Stress Case",
+  "borrowing_base": "19750000.00",
+  "certificate_no": 1,
+  "commitment": "30000000.00",
+  "config_hash": "ad6abbdf62210daad341f58106d41e1e1a72bd0ec8a600b692217a0fdc6dc4e1",
+  "excess_availability": "1750000.00",
+  "facility_name": "Senior Secured Revolving Credit Facility (ABL)",
+  "gross_availability": "21600000.00",
+  "inventory": {
+    "advance_rate": "0.80",
+    "asset_class": "inventory",
+    "availability": "8000000.00",
+    "concentration": [],
+    "eligible": "17000000.00",
+    "eligible_nolv_value": "10000000.00",
+    "gross": "18000000.00",
+    "ineligibles": [
+      {
+        "amount": "1000000.00",
+        "citation": "Credit Agreement \u00a71.1 \"Eligible Inventory\" (e)",
+        "detail": [
+          {
+            "amount": "1000000.00",
+            "entity": "Discontinued Holiday Packs",
+            "fact_id": "inventory:Discontinued Holiday Packs:value",
+            "note": ""
+          }
+        ],
+        "label": "Obsolete / slow-moving inventory",
+        "rule_id": "inv_obsolete"
+      }
+    ],
+    "nolv_detail": [
+      {
+        "category": "Beverages",
+        "cost": "2000000.00",
+        "nolv_ratio": "0.50",
+        "nolv_value": "1000000.00"
+      },
+      {
+        "category": "Dry Goods",
+        "cost": "6000000.00",
+        "nolv_ratio": "0.70",
+        "nolv_value": "4200000.00"
+      },
+      {
+        "category": "Frozen",
+        "cost": "4000000.00",
+        "nolv_ratio": "0.65",
+        "nolv_value": "2600000.00"
+      },
+      {
+        "category": "Non-Food",
+        "cost": "1000000.00",
+        "nolv_ratio": "0.30",
+        "nolv_value": "300000.00"
+      },
+      {
+        "category": "Produce",
+        "cost": "1000000.00",
+        "nolv_ratio": "0.40",
+        "nolv_value": "400000.00"
+      },
+      {
+        "category": "Refrigerated",
+        "cost": "3000000.00",
+        "nolv_ratio": "0.50",
+        "nolv_value": "1500000.00"
+      }
+    ],
+    "total_ineligible": "1000000.00",
+    "valuation_basis": "nolv"
+  },
+  "lc_exposure": "0.00",
+  "lender": "Meridian Bank, N.A.",
+  "outstanding": "18000000.00",
+  "reserve_detail": [
+    {
+      "amount": "850000.00",
+      "citation": "Credit Agreement \u00a71.1 \"Reserves\" \u2014 Dilution",
+      "id": "dilution_reserve",
+      "label": "Dilution reserve (returns / credits over threshold)",
+      "type": "dilution"
+    },
+    {
+      "amount": "600000.00",
+      "citation": "Credit Agreement \u00a71.1 \"Reserves\" \u2014 Priority Payables",
+      "id": "priority_payables",
+      "label": "Priority-payable reserve (unpaid sales / payroll taxes)",
+      "type": "priority_payable"
+    },
+    {
+      "amount": "400000.00",
+      "citation": "Credit Agreement \u00a71.1 \"Reserves\" \u2014 Rent",
+      "id": "rent_reserve",
+      "label": "Rent / landlord reserve (un-waivered 3PL locations)",
+      "type": "rent"
+    }
+  ],
+  "reserves_total": "1850000.00",
+  "run_id": "GOLDEN",
+  "suppressed_availability": "0.00"
+}

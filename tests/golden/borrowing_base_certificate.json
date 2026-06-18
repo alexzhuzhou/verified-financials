@@ -1,0 +1,162 @@
+{
+  "accounts_receivable": {
+    "advance_rate": "0.85",
+    "asset_class": "accounts_receivable",
+    "availability": "18827500.00",
+    "concentration": [
+      {
+        "balance_in_base": "6600000.00",
+        "cap_amount": "3750000.00",
+        "customer": "Lone Star Grocery Group",
+        "excess_excluded": "2850000.00",
+        "pct_of_base": "0.2640",
+        "pct_of_gross": "0.2200"
+      }
+    ],
+    "eligible": "22150000.00",
+    "eligible_nolv_value": null,
+    "gross": "30000000.00",
+    "ineligibles": [
+      {
+        "amount": "1800000.00",
+        "citation": "Credit Agreement \u00a71.1 \"Eligible Receivables\" (d)",
+        "detail": [
+          {
+            "amount": "250000.00",
+            "entity": "Bayou Foodservice Supply",
+            "fact_id": "ar_aging:Bayou Foodservice Supply:total",
+            "note": ""
+          },
+          {
+            "amount": "500000.00",
+            "entity": "Heartland Grocers Co-op",
+            "fact_id": "ar_aging:Heartland Grocers Co-op:total",
+            "note": ""
+          },
+          {
+            "amount": "300000.00",
+            "entity": "Interstate Freight Partners",
+            "fact_id": "ar_aging:Interstate Freight Partners:total",
+            "note": ""
+          },
+          {
+            "amount": "350000.00",
+            "entity": "Polar Cold Storage Foods",
+            "fact_id": "ar_aging:Polar Cold Storage Foods:total",
+            "note": ""
+          },
+          {
+            "amount": "400000.00",
+            "entity": "QuickStop C-Stores",
+            "fact_id": "ar_aging:QuickStop C-Stores:total",
+            "note": ""
+          }
+        ],
+        "label": "Receivables aged 90+ days past due",
+        "rule_id": "ar_aged_90_plus"
+      },
+      {
+        "amount": "2000000.00",
+        "citation": "Credit Agreement \u00a71.1 \"Eligible Receivables\" (h)",
+        "detail": [
+          {
+            "amount": "2000000.00",
+            "entity": "Gulf Provisions LLC - UAE",
+            "fact_id": "ar_aging:Gulf Provisions LLC - UAE:total",
+            "note": ""
+          }
+        ],
+        "label": "Foreign account debtors without credit insurance or L/C",
+        "rule_id": "ar_foreign_uninsured"
+      },
+      {
+        "amount": "1200000.00",
+        "citation": "Credit Agreement \u00a71.1 \"Eligible Receivables\" (b)",
+        "detail": [
+          {
+            "amount": "1200000.00",
+            "entity": "McLane Logistics International",
+            "fact_id": "ar_aging:McLane Logistics International:total",
+            "note": ""
+          }
+        ],
+        "label": "Affiliate / intercompany receivables",
+        "rule_id": "ar_intercompany"
+      }
+    ],
+    "nolv_detail": [],
+    "total_ineligible": "7850000.00",
+    "valuation_basis": "cost"
+  },
+  "agent": "Meridian Bank, N.A., as Administrative Agent",
+  "agreement_reference": "Credit Agreement dated as of November 1, 2025",
+  "as_of_date": "2025-12-31",
+  "binding_constraint": "borrowing_base",
+  "borrower": "McLane-Style Distribution Holdings, LLC",
+  "borrowing_base": "27327500.00",
+  "certificate_no": 1,
+  "commitment": "40000000.00",
+  "config_hash": "a6caaa31b082e5ad9ba5315172f403a669a13d90b93fa5297bfd2b98c6072e25",
+  "excess_availability": "5327500.00",
+  "facility_name": "Senior Secured Revolving Credit Facility",
+  "gross_availability": "27327500.00",
+  "inventory": {
+    "advance_rate": "0.50",
+    "asset_class": "inventory",
+    "availability": "8500000.00",
+    "concentration": [],
+    "eligible": "17000000.00",
+    "eligible_nolv_value": null,
+    "gross": "20000000.00",
+    "ineligibles": [
+      {
+        "amount": "3000000.00",
+        "citation": "Credit Agreement \u00a71.1 \"Eligible Inventory\" (e)",
+        "detail": [
+          {
+            "amount": "700000.00",
+            "entity": "Close-Dated Canned Soups",
+            "fact_id": "inventory:Close-Dated Canned Soups:value",
+            "note": ""
+          },
+          {
+            "amount": "300000.00",
+            "entity": "Damaged Packaging Materials",
+            "fact_id": "inventory:Damaged Packaging Materials:value",
+            "note": ""
+          },
+          {
+            "amount": "900000.00",
+            "entity": "Discontinued Holiday Gift Packs",
+            "fact_id": "inventory:Discontinued Holiday Gift Packs:value",
+            "note": ""
+          },
+          {
+            "amount": "500000.00",
+            "entity": "Overstock Seasonal Beverages",
+            "fact_id": "inventory:Overstock Seasonal Beverages:value",
+            "note": ""
+          },
+          {
+            "amount": "600000.00",
+            "entity": "Slow-Moving Specialty Sauces",
+            "fact_id": "inventory:Slow-Moving Specialty Sauces:value",
+            "note": ""
+          }
+        ],
+        "label": "Obsolete / slow-moving inventory",
+        "rule_id": "inv_obsolete"
+      }
+    ],
+    "nolv_detail": [],
+    "total_ineligible": "3000000.00",
+    "valuation_basis": "cost"
+  },
+  "lc_exposure": "0.00",
+  "lender": "Meridian Bank, N.A.",
+  "outstanding": "22000000.00",
+  "reserve_detail": [],
+  "reserves_total": "0.00",
+  "run_id": "GOLDEN",
+  "suppressed_availability": "0.00"
+}
