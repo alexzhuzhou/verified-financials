@@ -88,7 +88,7 @@ export function GuideDialog({ open, onOpenChange }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] gap-0 overflow-y-auto p-0">
         <DialogHeader className="space-y-2 px-6 pb-5 pt-6">
-          <img src={wordmark} alt="Red Lion Advisory" className="mb-1 h-7 w-auto" />
+          <img src={wordmark} alt="Red Lion Advisory" className="mb-1 h-7 w-auto self-start" />
           <DialogTitle className="text-2xl">Welcome to Verified Financials</DialogTitle>
           <DialogDescription className="leading-relaxed">
             From a boutique advisor's lens: can we trust the data, how much can they
