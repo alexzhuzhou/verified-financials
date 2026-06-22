@@ -36,7 +36,7 @@ _DIST = Path(__file__).resolve().parents[3] / "frontend" / "dist"
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="Verified Financials API",
+        title="Sentinel API",
         version="0.1.0",
         description=(
             "Verification / tie-out, borrowing base certificate, and FCCR covenant "

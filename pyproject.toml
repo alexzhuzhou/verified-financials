@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "verified-financials"
 version = "0.1.0"
-description = "Verified Financials — verification, borrowing base, and FCCR covenant engines for a McLane-like food distributor (Red Lion Advisory demo)"
+description = "Sentinel — verification, borrowing base, and FCCR covenant engines for a McLane-like food distributor (Red Lion Advisory demo)"
 requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.7",

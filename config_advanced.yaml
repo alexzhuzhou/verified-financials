@@ -1,5 +1,5 @@
 # =============================================================================
-# Verified Financials — ADVANCED / STRESS scenario.
+# Sentinel — ADVANCED / STRESS scenario.
 # Same engines, a stricter loan agreement on a distressed quarter. Turns on the
 # deeper-modeling features: NOLV inventory valuation, computed reserves,
 # cross-aging taint, a springing FCCR covenant, and equity-cure tracking.

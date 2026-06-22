@@ -299,7 +299,7 @@ export function LandingPage() {
       icon: <FileCheck2 className="h-3.5 w-3.5" aria-hidden />,
       eyebrow: "Verify",
       title: "Reconcile the files. Flag what won't tie out.",
-      body: "Drop in the borrower's general ledger, A/R aging, inventory and financials. Verified Financials ties every figure back to source and surfaces only the exceptions that matter — with the variance quantified.",
+      body: "Drop in the borrower's general ledger, A/R aging, inventory and financials. Sentinel ties every figure back to source and surfaces only the exceptions that matter — with the variance quantified.",
       bullets: [
         "A/R off by $200K against the aging detail",
         "Inventory variance of $500K versus the perpetual",

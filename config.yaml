@@ -1,5 +1,5 @@
 # =============================================================================
-# Verified Financials — "the loan agreement as config"
+# Sentinel — "the loan agreement as config"
 # Every rate, cap, threshold, and rule the engines apply is read from this file.
 # A real client's credit agreement would ship its own version of this file.
 # =============================================================================

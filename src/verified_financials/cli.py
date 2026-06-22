@@ -18,7 +18,7 @@ from .store.repository import FactRepository
 
 load_env()  # pick up <repo-root>/.env (e.g. OPENAI_API_KEY) for the CLI too
 
-app = typer.Typer(add_completion=False, help="Verified Financials — verification, borrowing base, FCCR.")
+app = typer.Typer(add_completion=False, help="Sentinel — verification, borrowing base, FCCR.")
 
 
 def _money(v) -> str:
@@ -140,7 +140,7 @@ def run_all(
         typer.echo(f"  synthetic data generated ({scenario})")
     result = run_pipeline(config=config, render=True)
     s = result.summary()
-    typer.secho(f"\n=== Verified Financials — run {result.run_id} ===", bold=True)
+    typer.secho(f"\n=== Sentinel — run {result.run_id} ===", bold=True)
     typer.echo(f"  facts ingested        {s['fact_count']}")
     typer.echo(f"  verification          {s['verification']['passed']} passed, "
                f"{s['verification']['failed']} exception(s)")

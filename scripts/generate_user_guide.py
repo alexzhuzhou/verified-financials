@@ -1,11 +1,11 @@
-"""Generate the Verified Financials product & user guide as a styled .docx.
+"""Generate the Sentinel product & user guide as a styled .docx.
 
 Standalone doc tool — NOT a project dependency. Run with the venv that has
 python-docx installed:
 
     .venv/bin/python scripts/generate_user_guide.py
 
-Writes "Verified Financials - Product and User Guide.docx" to the repo root.
+Writes "Sentinel - Product and User Guide.docx" to the repo root.
 """
 
 from __future__ import annotations
@@ -153,7 +153,7 @@ def build() -> Document:
         doc.paragraphs[-1].paragraph_format.space_after = Pt(10)
     title = doc.add_paragraph()
     title.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    r = title.add_run("Verified Financials")
+    r = title.add_run("Sentinel™")
     r.bold = True
     r.font.size = Pt(30)
     r.font.color.rgb = BRAND
@@ -168,9 +168,9 @@ def build() -> Document:
     para("Version 1.0 · June 2026 · Demonstration build on synthetic data", color=MUTED, size=9, after=14)
 
     # ---------------------------------------------------------------- 1
-    doc.add_heading("1. What Verified Financials is", level=1)
+    doc.add_heading("1. What Sentinel is", level=1)
     para(
-        "Verified Financials is an asset-based-lending (ABL) analysis tool. It takes a "
+        "Sentinel is an asset-based-lending (ABL) analysis tool. It takes a "
         "borrower's financial files and answers the three questions a secured lender cares "
         "about most: can we trust the numbers, how much can the borrower safely borrow against "
         "their collateral, and are they staying within the financial covenant their loan "
@@ -208,7 +208,7 @@ def build() -> Document:
          "buried cell reference, if it exists at all."),
     ])
     para(
-        "Verified Financials replaces that with one consistent, rules-driven engine: reconcile "
+        "Sentinel replaces that with one consistent, rules-driven engine: reconcile "
         "once, compute the borrowing base the same way every time, monitor the covenant "
         "continuously, and keep a click-through trail from every headline number to the exact "
         "row of the source file it came from."
@@ -369,7 +369,7 @@ def build() -> Document:
     doc.add_heading("5. What is AI vs. what is deterministic", level=1)
     para(
         "This distinction matters for trust, so it is worth being precise. Every financial number "
-        "in Verified Financials is produced by deterministic, rules-based code — no AI, no "
+        "in Sentinel is produced by deterministic, rules-based code — no AI, no "
         "randomness, fully reproducible. AI is used in exactly one place: to write the "
         "plain-English narrative on the Advisor Briefing screen. The AI never calculates."
     )
@@ -423,7 +423,7 @@ def build() -> Document:
 
     # ---------------------------------------------------------------- 7
     doc.add_heading("7. Benefits — the value proposition", level=1)
-    para("Verified Financials creates value for everyone in the lending relationship.")
+    para("Sentinel creates value for everyone in the lending relationship.")
 
     doc.add_heading("For the advisory firm (the operator)", level=3)
     bullets([
@@ -516,14 +516,14 @@ def build() -> Document:
        "real client's terms would ship as their own version of that file.")
 
     para()
-    para("Verified Financials — prepared by Red Lion Advisory. Demonstration build on synthetic "
+    para("Sentinel — prepared by Red Lion Advisory. Demonstration build on synthetic "
          "data; figures are illustrative.", italic=True, color=MUTED, size=9)
 
     return doc
 
 
 def main() -> None:
-    out = Path(__file__).resolve().parents[1] / "Verified Financials - Product and User Guide.docx"
+    out = Path(__file__).resolve().parents[1] / "Sentinel - Product and User Guide.docx"
     build().save(out)
     print(f"wrote {out}")
 

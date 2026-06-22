@@ -29,7 +29,7 @@ export const TOUR: TourStep[] = [
     title: "What this tool does",
     body: (
       <>
-        Verified Financials takes a borrower's raw financials and answers three questions
+        Sentinel takes a borrower's raw financials and answers three questions
         a lender cares about: can we trust the data, how much can they borrow, and are they
         on-side with their covenant? This Overview is the at-a-glance summary — every figure
         is computed from the underlying files (this demo runs on synthetic data). Let's walk

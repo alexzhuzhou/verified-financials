@@ -1,4 +1,4 @@
-"""Verified Financials — verification, borrowing base, and FCCR engines.
+"""Sentinel — verification, borrowing base, and FCCR engines.
 
 A demo platform that ingests messy financial data into a provenance-tracked
 fact store, then runs three engines over it:

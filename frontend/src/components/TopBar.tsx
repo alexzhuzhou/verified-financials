@@ -22,7 +22,7 @@ export function TopBar() {
     <header className="no-print flex items-center justify-between border-b bg-background px-6 py-3">
       <Link to="/app" className="block">
         <img src={wordmark} alt="Red Lion Advisory" className="mb-1 h-7 w-auto" />
-        <div className="font-serif text-xl font-semibold">Verified Financials</div>
+        <div className="font-serif text-xl font-semibold">Sentinel™</div>
       </Link>
 
       <div className="flex items-center gap-3">

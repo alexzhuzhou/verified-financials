@@ -1,4 +1,4 @@
-# Verified Financials
+# Sentinel™
 
 A demo platform built for **Red Lion Advisory** to show a client — a ~$180M
 family-owned food-distribution business ("McLane-like", five operating
