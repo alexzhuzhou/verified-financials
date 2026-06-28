@@ -215,6 +215,104 @@ export interface GoalSeekResult {
   message: string;
 }
 
+// --- 13-week cash-flow forecast ---
+export interface LedgerLine {
+  row_id: string;
+  po_so: string;
+  type: string;
+  party: string;
+  segment: string;
+  category: string;
+  kind: "inflow" | "outflow";
+  amount: string;
+  settle_date: string;
+  expected_date: string;
+  lag_days: string;
+  lag_basis: string;
+  week: number;
+}
+
+export interface WeeklyCell {
+  week: number;
+  forecast: string;
+  contractual: string;
+}
+
+export interface CategoryRow {
+  category: string;
+  segment: string;
+  kind: "inflow" | "outflow";
+  weeks: WeeklyCell[];
+  period_total: string;
+  period_total_contractual: string;
+}
+
+export interface WeekPosition {
+  week: number;
+  week_start: string;
+  total_receipts: string;
+  total_disbursements: string;
+  net: string;
+  opening: string;
+  closing: string;
+  closing_contractual: string;
+  below_floor: boolean;
+}
+
+export interface CashFlowKpis {
+  min_closing: string;
+  min_closing_week: number;
+  total_receipts: string;
+  total_disbursements: string;
+  net_cash_flow: string;
+  avg_weekly_net: string;
+  weeks_below_floor: number;
+  exception_count: number;
+}
+
+export interface CashFlowException {
+  row_id: string;
+  type: string;
+  party: string;
+  segment: string;
+  amount: string;
+  reason_code: string;
+  suggested_action: string;
+  settle_date: string;
+}
+
+export interface SegmentLag {
+  segment: string;
+  avg_lag_days: string;
+  std_dev_days: string;
+  sample_count: number;
+}
+
+export interface CashFlowForecast {
+  run_id: string;
+  borrower: string;
+  as_of_date: string;
+  anchor_date: string;
+  horizon_weeks: number;
+  opening_cash: string;
+  cash_floor: string;
+  timing_method: string;
+  inflow_rows: CategoryRow[];
+  outflow_rows: CategoryRow[];
+  positions: WeekPosition[];
+  kpis: CashFlowKpis;
+  kpis_contractual: CashFlowKpis;
+  exceptions: CashFlowException[];
+  segment_lags: SegmentLag[];
+  ledger: LedgerLine[];
+}
+
+export interface CashFlowResponse {
+  run_id: string;
+  available: boolean;
+  forecast: CashFlowForecast | null;
+}
+
 // A loose shape for the resolved config (the editable loan agreement).
 export type AppConfig = Record<string, any>;
 export type Overrides = Record<string, any>;

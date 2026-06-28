@@ -1,6 +1,7 @@
 import type {
   AppConfig,
   BriefingResponse,
+  CashFlowResponse,
   ComputeResponse,
   Fact,
   GoalSeekResult,
@@ -80,6 +81,29 @@ export const api = {
       }),
     });
     if (!res.ok) throw await errorFor(res, "POST", "/compute/certificate.html");
+    return res.text();
+  },
+
+  /** The live 13-week cash-flow forecast (what-if reflected). */
+  cashflow: (args: ComputeArgs) =>
+    postJSON<CashFlowResponse>("/compute/cashflow", {
+      scenario: args.scenario ?? "baseline",
+      upload_id: args.uploadId ?? null,
+      config_overrides: args.configOverrides,
+    }),
+
+  /** The print-styled, standalone 13-week cash-flow forecast HTML. */
+  async cashflowHtml(args: ComputeArgs): Promise<string> {
+    const res = await fetch(`${BASE}/compute/cashflow.html`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        scenario: args.scenario ?? "baseline",
+        upload_id: args.uploadId ?? null,
+        config_overrides: args.configOverrides,
+      }),
+    });
+    if (!res.ok) throw await errorFor(res, "POST", "/compute/cashflow.html");
     return res.text();
   },
 

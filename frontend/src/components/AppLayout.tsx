@@ -1,4 +1,4 @@
-import { FileBarChart, GitCompare, LayoutDashboard, ScrollText, ShieldCheck, Sparkles, Upload } from "lucide-react";
+import { FileBarChart, GitCompare, LayoutDashboard, ScrollText, ShieldCheck, Sparkles, Upload, Waves } from "lucide-react";
 import { useEffect } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 
@@ -17,6 +17,7 @@ const NAV = [
   { to: "/app/verification", label: "Verification", icon: ShieldCheck, end: false },
   { to: "/app/borrowing-base", label: "Borrowing Base", icon: ScrollText, end: false },
   { to: "/app/fccr", label: "FCCR Covenant", icon: FileBarChart, end: false },
+  { to: "/app/cash-flow", label: "Cash Flow", icon: Waves, end: false },
   { to: "/app/compare", label: "Compare", icon: GitCompare, end: false },
   { to: "/app/setup", label: "Upload Data", icon: Upload, end: false },
 ];

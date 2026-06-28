@@ -205,6 +205,27 @@ export function WhatIfPanel() {
           </>
         )}
       </Section>
+
+      <Section title="Cash Flow">
+        <div className="space-y-1.5">
+          <Label>Opening cash ($)</Label>
+          <Input type="number" step="250000" value={String(eff(["cash_flow", "opening_cash"]))}
+            onChange={(e) => setOverride(["cash_flow", "opening_cash"], e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Cash floor ($)</Label>
+          <Input type="number" step="250000" value={String(eff(["cash_flow", "cash_floor"]))}
+            onChange={(e) => setOverride(["cash_flow", "cash_floor"], e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Anchor (W1 Monday)</Label>
+          <Input type="date" value={String(eff(["cash_flow", "anchor_date"]))}
+            onChange={(e) => setOverride(["cash_flow", "anchor_date"], e.target.value)} />
+        </div>
+        <SliderRow label="Collection lag shift" value={num(["cash_flow", "global_lag_shift_days"])} min={-10} max={30} step={1}
+          display={`${num(["cash_flow", "global_lag_shift_days"]) >= 0 ? "+" : ""}${num(["cash_flow", "global_lag_shift_days"])}d`}
+          onChange={(v) => setOverride(["cash_flow", "global_lag_shift_days"], String(v))} />
+      </Section>
     </div>
   );
 }

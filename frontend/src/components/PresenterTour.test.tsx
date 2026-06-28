@@ -30,11 +30,11 @@ describe("PresenterTour", () => {
   it("shows the first step when started and advances on Next", () => {
     useAppStore.getState().startTour();
     renderTour();
-    expect(screen.getByText(/Step 1 of 6/)).toBeInTheDocument();
+    expect(screen.getByText(/Step 1 of 7/)).toBeInTheDocument();
     expect(screen.getByText(TOUR[0].title)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /next/i }));
-    expect(screen.getByText(/Step 2 of 6/)).toBeInTheDocument();
+    expect(screen.getByText(/Step 2 of 7/)).toBeInTheDocument();
     expect(screen.getByText(TOUR[1].title)).toBeInTheDocument();
   });
 

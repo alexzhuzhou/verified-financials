@@ -8,13 +8,14 @@ const ROUTES = new Set([
   "/app/verification",
   "/app/borrowing-base",
   "/app/fccr",
+  "/app/cash-flow",
   "/app/compare",
   "/app/setup",
 ]);
 
 describe("guided tour script", () => {
-  it("has six steps", () => {
-    expect(TOUR).toHaveLength(6);
+  it("has seven steps", () => {
+    expect(TOUR).toHaveLength(7);
   });
 
   it("every step targets a known route and a valid scenario, with title + body", () => {
@@ -26,8 +27,8 @@ describe("guided tour script", () => {
     }
   });
 
-  it("opens on the baseline overview and ends on the stress FCCR breach", () => {
+  it("opens on the baseline overview and ends on the stress cash-flow squeeze", () => {
     expect(TOUR[0]).toMatchObject({ route: "/app", scenario: "baseline" });
-    expect(TOUR[TOUR.length - 1]).toMatchObject({ route: "/app/fccr", scenario: "stress" });
+    expect(TOUR[TOUR.length - 1]).toMatchObject({ route: "/app/cash-flow", scenario: "stress" });
   });
 });

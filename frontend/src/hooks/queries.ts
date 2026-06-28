@@ -52,6 +52,18 @@ export function useBriefing() {
   });
 }
 
+/** The live 13-week cash-flow forecast for the current source + rules. */
+export function useCashFlow() {
+  const dataSource = useAppStore((s) => s.dataSource);
+  const overrides = useAppStore((s) => s.overrides);
+  const debounced = useDebounce(overrides, 250);
+  return useQuery({
+    queryKey: ["cashflow", dataSource, JSON.stringify(debounced)],
+    queryFn: () => api.cashflow({ ...sourceArgs(dataSource), configOverrides: debounced as Overrides }),
+    placeholderData: keepPreviousData,
+  });
+}
+
 /** Sensitivity ("which lever moves availability most") for the current source + rules. */
 export function useSensitivity() {
   const dataSource = useAppStore((s) => s.dataSource);

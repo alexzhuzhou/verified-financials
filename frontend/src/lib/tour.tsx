@@ -106,4 +106,19 @@ export const TOUR: TourStep[] = [
       </>
     ),
   },
+  {
+    route: "/app/cash-flow",
+    scenario: "stress",
+    highlight: "tour-cashflow-chart",
+    title: "13-week cash-flow forecast",
+    body: (
+      <>
+        The same downturn also squeezes liquidity. The app builds a 13-week forecast from
+        individual cash events — timing each by its historical{" "}
+        <Term name="provenance">payment behavior</Term> — and rolls it to a weekly closing-cash
+        line. Here closing cash dips <strong>below the floor</strong> in the near term, a financing
+        gap surfaced weeks early. The same engine, pointed at cash instead of covenants.
+      </>
+    ),
+  },
 ];
