@@ -17,10 +17,12 @@ from pathlib import Path
 from .config.loader import config_hash, load_config
 from .config.schema import Config
 from .engines.borrowing_base import compute_borrowing_base
+from .engines.cash_flow import compute_cash_flow
 from .engines.fccr import compute_fccr
 from .engines.verification import run_verification
 from .loaders.base import load_all
 from .models.borrowing_base import BorrowingBaseCertificate
+from .models.cash_flow import CashFlowForecast
 from .models.fccr import FccrReport
 from .models.verification import VerificationReport
 from .rendering import renderer
@@ -114,6 +116,46 @@ def compute_with_overrides(
         fccr=fccr,
         fact_count=fact_count,
     )
+
+
+# --------------------------------------------------------------------------- #
+# Cash flow — its own data path (the cash-event ledger + paid-history sample),
+# parallel to the borrowing-base engines above. Kept separate so a borrowing-base
+# compute never requires a cash ledger (and the upload path stays unaffected).
+# --------------------------------------------------------------------------- #
+def ingest_cash(repo: FactRepository, config: Config, data_dir: str | Path | None = None) -> int:
+    """Load the cash-event ledger + paid-history sample into the fact store."""
+    from .loaders import cash_events, paid_history
+
+    data_dir = Path(data_dir or config.settings.data_dir)
+    loaded_at = datetime.now()
+    as_of = config.facility.as_of_date
+    facts = cash_events.load(data_dir / "cash_events.csv", as_of, loaded_at)
+    facts += paid_history.load(data_dir / "paid_history.csv", as_of, loaded_at)
+    return repo.add_many(facts)
+
+
+def compute_cashflow_with_overrides(
+    overrides: dict | None,
+    base_config: Config | None = None,
+    data_dir: str | Path | None = None,
+    run_id: str | None = None,
+) -> CashFlowForecast:
+    """Recompute the 13-week cash-flow forecast with config overrides deep-merged
+    onto a base config — the live what-if path, no persistence (mirrors
+    ``compute_with_overrides`` but on the cash-event data path)."""
+    base_config = base_config or load_config()
+    merged = _deep_merge(base_config.model_dump(mode="json"), overrides or {})
+    config = Config.model_validate(merged)
+    run_id = run_id or new_run_id()
+
+    conn = connect(":memory:")
+    init_schema(conn)
+    repo = FactRepository(conn)
+    ingest_cash(repo, config, data_dir)
+    forecast = compute_cash_flow(repo, config, run_id)
+    conn.close()
+    return forecast
 
 
 # --------------------------------------------------------------------------- #
@@ -430,6 +472,18 @@ def run_pipeline(
     if render:
         out = Path(artifacts_dir or config.settings.artifacts_dir)
         artifacts = _render_artifacts(out, verification, certificate, fccr)
+        # cash-flow forecast (its own data path; skip quietly if no cash ledger)
+        try:
+            forecast = compute_cashflow_with_overrides(
+                {}, base_config=config, data_dir=data_dir, run_id=run_id
+            )
+            cf_json = forecast.model_dump(mode="json")
+            (out / "cash_flow_forecast.json").write_text(json.dumps(cf_json, indent=2), encoding="utf-8")
+            (out / "cash_flow_forecast.html").write_text(renderer.render_cashflow(cf_json), encoding="utf-8")
+            artifacts["cash_flow_forecast.json"] = str(out / "cash_flow_forecast.json")
+            artifacts["cash_flow_forecast.html"] = str(out / "cash_flow_forecast.html")
+        except FileNotFoundError:
+            pass
 
     conn.close()
     return PipelineResult(

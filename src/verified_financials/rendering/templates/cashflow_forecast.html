@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}13-Week Cash Flow Forecast{% endblock %}
+{% block heading %}13-Week Cash Flow Forecast{% endblock %}
+{% block subtitle %}Direct, bottom-up liquidity forecast &amp; early-warning monitor{% endblock %}
+{% block confighash %}{{ cf.run_id }}{% endblock %}
+{% block runid %}{{ cf.run_id }}{% endblock %}
+
+{% block meta %}
+<table class="meta">
+  <tr><td class="k">Prepared for</td><td class="v">{{ cf.borrower }}</td>
+      <td class="k">As of</td><td class="v">{{ cf.as_of_date }}</td></tr>
+  <tr><td class="k">Anchor (W1)</td><td class="v">{{ cf.anchor_date }}</td>
+      <td class="k">Horizon</td><td class="v">{{ cf.horizon_weeks }} weeks</td></tr>
+  <tr><td class="k">Opening cash</td><td class="v">{{ cf.opening_cash | money }}</td>
+      <td class="k">Cash floor</td><td class="v">{{ cf.cash_floor | money }}</td></tr>
+</table>
+{% endblock %}
+
+{% block content %}
+
+{% if cf.kpis.weeks_below_floor > 0 %}
+  <div class="callout warn"><span class="badge bad">LIQUIDITY ALERT</span>
+    Closing cash dips below the {{ cf.cash_floor | money }} floor in
+    {{ cf.kpis.weeks_below_floor }} week(s), reaching a low of
+    {{ cf.kpis.min_closing | money }} in week {{ cf.kpis.min_closing_week }}.</div>
+{% else %}
+  <div class="callout"><span class="badge ok">ABOVE FLOOR</span>
+    Closing cash stays above the {{ cf.cash_floor | money }} floor across all
+    {{ cf.horizon_weeks }} weeks; the trough is {{ cf.kpis.min_closing | money }}
+    in week {{ cf.kpis.min_closing_week }}.</div>
+{% endif %}
+
+<h2 class="section">Key Indicators</h2>
+<table class="lines">
+  <tbody>
+    <tr><td class="label">Minimum closing cash</td><td class="num">{{ cf.kpis.min_closing | money }} (week {{ cf.kpis.min_closing_week }})</td></tr>
+    <tr><td class="label">Total receipts (13W)</td><td class="num">{{ cf.kpis.total_receipts | money }}</td></tr>
+    <tr><td class="label">Total disbursements (13W)</td><td class="num">{{ cf.kpis.total_disbursements | money }}</td></tr>
+    <tr><td class="label">Net cash flow (13W)</td><td class="num">{{ cf.kpis.net_cash_flow | money }}</td></tr>
+    <tr><td class="label">Average weekly net</td><td class="num">{{ cf.kpis.avg_weekly_net | money }}</td></tr>
+    <tr><td class="label">Weeks below floor</td><td class="num">{{ cf.kpis.weeks_below_floor }}</td></tr>
+    <tr class="subtotal"><td>Open exception items</td><td class="num">{{ cf.kpis.exception_count }}</td></tr>
+  </tbody>
+</table>
+
+<h2 class="section">Closing Cash by Week</h2>
+<div class="trend">
+  {% for b in bars %}
+  <div class="row">
+    <span class="q">W{{ b.week }}</span>
+    <span class="track">
+      <span class="fill" style="width: {{ b.pct }}%; {% if b.below %}background: var(--bad);{% endif %}"></span>
+      <span class="cov" style="left: {{ floor_pct }}%;" title="cash floor"></span>
+    </span>
+    <span class="val">{{ b.closing | money(0) }}</span>
+  </div>
+  {% endfor %}
+  <div class="prov">Red marker = {{ cf.cash_floor | money }} cash floor. Red bars breach it.</div>
+</div>
+
+<h2 class="section">Weekly Cash Position</h2>
+<table class="lines">
+  <thead><tr><th>Week</th><th>Starting</th><th class="num">Receipts</th>
+    <th class="num">Disbursements</th><th class="num">Net</th><th class="num">Closing</th></tr></thead>
+  <tbody>
+    {% for p in cf.positions %}
+    <tr {% if p.below_floor %}class="indent"{% endif %}>
+      <td class="label">W{{ p.week }}</td><td class="prov">{{ p.week_start }}</td>
+      <td class="num">{{ p.total_receipts | money(0) }}</td>
+      <td class="num">{{ p.total_disbursements | money(0) }}</td>
+      <td class="num">{{ p.net | money(0) }}</td>
+      <td class="num">{{ p.closing | money(0) }}{% if p.below_floor %} <span class="badge bad">below floor</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2 class="section">Receipts &amp; Disbursements by Category (13-week total)</h2>
+<table class="lines">
+  <thead><tr><th>Category</th><th>Segment</th><th class="num">Behavioral</th><th class="num">Contractual</th></tr></thead>
+  <tbody>
+    {% for r in cf.inflow_rows %}
+    <tr><td class="label">{{ r.category }}</td><td class="prov">{{ r.segment }}</td>
+        <td class="num">{{ r.period_total | money(0) }}</td>
+        <td class="num">{{ r.period_total_contractual | money(0) }}</td></tr>
+    {% endfor %}
+    <tr class="subtotal"><td>Total Receipts</td><td></td>
+        <td class="num">{{ cf.kpis.total_receipts | money(0) }}</td>
+        <td class="num">{{ cf.kpis_contractual.total_receipts | money(0) }}</td></tr>
+    {% for r in cf.outflow_rows %}
+    <tr><td class="label">{{ r.category }}</td><td class="prov">{{ r.segment }}</td>
+        <td class="num">{{ r.period_total | money(0) }}</td>
+        <td class="num">{{ r.period_total_contractual | money(0) }}</td></tr>
+    {% endfor %}
+    <tr class="subtotal"><td>Total Disbursements</td><td></td>
+        <td class="num">{{ cf.kpis.total_disbursements | money(0) }}</td>
+        <td class="num">{{ cf.kpis_contractual.total_disbursements | money(0) }}</td></tr>
+  </tbody>
+</table>
+
+{% if cf.exceptions %}
+<h2 class="section">Exceptions Register</h2>
+<table class="lines">
+  <thead><tr><th>Event</th><th>Party</th><th class="num">Amount</th><th>Reason</th><th>Suggested action</th></tr></thead>
+  <tbody>
+    {% for e in cf.exceptions %}
+    <tr><td class="label">{{ e.row_id }} · {{ e.type }}</td><td class="prov">{{ e.party }}</td>
+        <td class="num">{{ e.amount | money(0) }}</td>
+        <td><span class="badge warn">{{ e.reason_code }}</span></td>
+        <td class="prov">{{ e.suggested_action }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<div class="callout">
+  <strong>Method.</strong> Each cash event is timed two ways: <em>contractual</em>
+  (cash on the settle date) and <em>behavioral</em> (settle date + the historical
+  days-late lag for that party / segment). Fixed costs (payroll, rent, tax,
+  insurance, intercompany, debt service) post on their stated date. The forecast
+  above uses the {{ cf.timing_method }} edge.
+</div>
+{% endblock %}

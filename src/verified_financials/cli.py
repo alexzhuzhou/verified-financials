@@ -6,13 +6,21 @@ from decimal import Decimal
 
 import typer
 
+from pathlib import Path
+
 from . import datagen
 from ._env import load_env
 from .config.loader import load_config
 from .engines.borrowing_base import compute_borrowing_base
 from .engines.fccr import compute_fccr
 from .engines.verification import run_verification
-from .pipeline import ingest, load_scenario, new_run_id, run_pipeline
+from .pipeline import (
+    compute_cashflow_with_overrides,
+    ingest,
+    load_scenario,
+    new_run_id,
+    run_pipeline,
+)
 from .store.db import connect, init_schema
 from .store.repository import FactRepository
 
@@ -126,6 +134,39 @@ def fccr(scenario: str = _SCENARIO_OPT):
     typer.secho(f"  Status: {status}" + ("  [EARLY WARNING]" if r.early_warning else ""), fg=color, bold=True)
     for reason in r.warning_reasons:
         typer.echo(f"    ! {reason}")
+
+
+@app.command("cash-flow")
+def cash_flow(scenario: str = _SCENARIO_OPT):
+    """Compute the 13-week cash-flow forecast and print the scorecard."""
+    base = load_scenario(scenario)
+    if not (Path(base.settings.data_dir) / "cash_events.csv").exists():
+        datagen.generate(scenario=scenario)
+    f = compute_cashflow_with_overrides({}, base_config=base, data_dir=base.settings.data_dir)
+    k = f.kpis
+    typer.secho("\n13-WEEK CASH FLOW FORECAST", bold=True)
+    typer.echo(f"  Anchor (W1)           {f.anchor_date}   horizon {f.horizon_weeks}w")
+    typer.echo(f"  Opening cash          {_money(f.opening_cash):>18}")
+    typer.echo(f"  Total receipts (13W)  {_money(k.total_receipts):>18}")
+    typer.echo(f"  Total disbursements   {_money(k.total_disbursements):>18}")
+    typer.echo(f"  Net cash flow (13W)   {_money(k.net_cash_flow):>18}")
+    typer.echo(f"  Cash floor            {_money(f.cash_floor):>18}")
+    typer.echo("  Closing by week:")
+    for p in f.positions:
+        flag = "  ← below floor" if p.below_floor else ""
+        color = typer.colors.RED if p.below_floor else typer.colors.WHITE
+        typer.secho(f"    W{p.week:<2} {p.week_start}  {_money(p.closing):>16}{flag}", fg=color)
+    status = "LIQUIDITY ALERT" if k.weeks_below_floor else "ABOVE FLOOR"
+    color = typer.colors.RED if k.weeks_below_floor else typer.colors.GREEN
+    typer.secho(
+        f"  Min closing {_money(k.min_closing)} (week {k.min_closing_week}); "
+        f"{k.weeks_below_floor} week(s) below floor — {status}",
+        fg=color, bold=True,
+    )
+    if f.exceptions:
+        typer.echo(f"  {len(f.exceptions)} exception item(s):")
+        for e in f.exceptions:
+            typer.echo(f"    [{e.reason_code}] {e.party} {_money(e.amount)} → {e.suggested_action}")
 
 
 @app.command("run-all")

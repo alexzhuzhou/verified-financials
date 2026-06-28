@@ -18,14 +18,17 @@ from ..config.schema import Config
 from ..loaders.base import load_all
 from ..loaders.validate import EXPECTED_COLUMNS, REQUIRED_FILES, validate_upload
 from ..models.borrowing_base import BorrowingBaseCertificate
+from ..models.cash_flow import CashFlowForecast
 from ..models.fccr import FccrReport
 from ..models.verification import VerificationReport
 from ..pipeline import (
     DEFAULT_LEVERS,
     _deep_merge,
+    compute_cashflow_with_overrides,
     compute_with_overrides,
     goal_seek,
     load_scenario,
+    new_run_id,
     run_pipeline,
     sensitivity,
 )
@@ -53,6 +56,12 @@ class ComputeResponse(BaseModel):
     verification: VerificationReport
     borrowing_base: BorrowingBaseCertificate
     fccr: FccrReport
+
+
+class CashFlowResponse(BaseModel):
+    run_id: str
+    available: bool = True                     # False for uploads (cash-flow uses scenario data)
+    forecast: CashFlowForecast | None = None
 
 
 class SensitivityRequest(BaseModel):
@@ -107,7 +116,8 @@ _RENDERERS = {
 def _ensure_scenario_data(scenario: str) -> Config:
     """Load a scenario's config, generating its dataset if absent."""
     config = load_scenario(scenario)
-    if not (Path(config.settings.data_dir) / "ar_aging.csv").exists():
+    data_dir = Path(config.settings.data_dir)
+    if not (data_dir / "ar_aging.csv").exists() or not (data_dir / "cash_events.csv").exists():
         datagen.generate(scenario=scenario)
     return config
 
@@ -219,6 +229,33 @@ def compute_certificate_html(req: ComputeRequest) -> str:
     return renderer.render_certificate(result.certificate.model_dump(mode="json"))
 
 
+@router.post("/compute/cashflow", response_model=CashFlowResponse)
+def compute_cashflow(req: ComputeRequest) -> CashFlowResponse:
+    """Recompute the live 13-week cash-flow forecast (what-if) — no persistence.
+
+    Operates on a built-in scenario's cash-event ledger. Uploaded datasets don't
+    carry a cash ledger, so the forecast is reported as unavailable for them.
+    """
+    if req.upload_id:
+        return CashFlowResponse(run_id=new_run_id(), available=False, forecast=None)
+    base = _ensure_scenario_data(req.scenario)
+    forecast = compute_cashflow_with_overrides(
+        req.config_overrides, base_config=base, data_dir=base.settings.data_dir
+    )
+    return CashFlowResponse(run_id=forecast.run_id, available=True, forecast=forecast)
+
+
+@router.post("/compute/cashflow.html", response_class=HTMLResponse)
+def compute_cashflow_html(req: ComputeRequest) -> str:
+    """Render the print-ready 13-week cash-flow forecast for the LIVE what-if state."""
+    base = _ensure_scenario_data(req.scenario if not req.upload_id else "baseline")
+    data_dir = base.settings.data_dir
+    forecast = compute_cashflow_with_overrides(
+        req.config_overrides, base_config=base, data_dir=data_dir
+    )
+    return renderer.render_cashflow(forecast.model_dump(mode="json"))
+
+
 @router.post("/sensitivity")
 def sensitivity_route(req: SensitivityRequest) -> dict:
     """One-at-a-time sensitivity on the headline outputs (tornado-chart fodder).
@@ -283,12 +320,21 @@ def _resolve_source(req) -> tuple[Config, str]:
     return base, base.settings.data_dir
 
 
+def _cashflow_for_briefing(req, base, data_dir):
+    """The live cash-flow forecast for grounding (None for uploads — no cash ledger)."""
+    if req.upload_id:
+        return None
+    return compute_cashflow_with_overrides(req.config_overrides, base_config=base, data_dir=data_dir)
+
+
 @router.post("/briefing")
 def briefing_route(req: ComputeRequest) -> dict:
     """Executive briefing over the live results (AI when a key is set, else a rule-generated memo)."""
     base, data_dir = _resolve_source(req)
     result = compute_with_overrides(req.config_overrides, base_config=base, data_dir=data_dir)
-    text, generated_by = ai_briefing.generate_briefing(ai_briefing.build_context(result))
+    forecast = _cashflow_for_briefing(req, base, data_dir)
+    context = ai_briefing.build_context(result, cashflow=forecast)
+    text, generated_by = ai_briefing.generate_briefing(context)
     return {"briefing": text, "generated_by": generated_by}
 
 
@@ -297,7 +343,8 @@ def ask_route(req: AskRequest):
     """Stream an answer to a free-text question, grounded in the live results (SSE)."""
     base, data_dir = _resolve_source(req)
     result = compute_with_overrides(req.config_overrides, base_config=base, data_dir=data_dir)
-    context = ai_briefing.build_context(result)
+    forecast = _cashflow_for_briefing(req, base, data_dir)
+    context = ai_briefing.build_context(result, cashflow=forecast)
 
     def event_stream():
         for delta in ai_briefing.answer_question_stream(context, req.question):

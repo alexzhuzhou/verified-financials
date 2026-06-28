@@ -10,21 +10,22 @@ from __future__ import annotations
 import json
 from collections.abc import Iterator
 
+from ..models.cash_flow import CashFlowForecast
 from ..pipeline import PipelineResult
 from . import llm
 
 SYSTEM_BRIEFING = (
     "You are a credit analyst at Red Lion Advisory writing for a lending client. "
-    "You are given the computed results of a borrowing-base and covenant analysis as JSON. "
-    "Use ONLY the figures in that JSON — never invent or estimate numbers. Cite the exact "
-    "dollar amounts and ratios. Be concise and concrete. Output Markdown."
+    "You are given the computed results of a borrowing-base, covenant, and 13-week cash-flow "
+    "analysis as JSON. Use ONLY the figures in that JSON — never invent or estimate numbers. "
+    "Cite the exact dollar amounts and ratios. Be concise and concrete. Output Markdown."
 )
 
 SYSTEM_QA = (
     "You are a credit analyst at Red Lion Advisory. You are given the computed results of a "
-    "borrowing-base and covenant analysis as JSON, then a question. Answer using ONLY the figures "
-    "in that JSON — never invent numbers. If the answer is not derivable from the data, say so "
-    "plainly. Be concise and cite the relevant figures."
+    "borrowing-base, covenant, and 13-week cash-flow analysis as JSON, then a question. Answer "
+    "using ONLY the figures in that JSON — never invent numbers. If the answer is not derivable "
+    "from the data, say so plainly. Be concise and cite the relevant figures."
 )
 
 
@@ -39,7 +40,11 @@ def _money(s) -> str:
 # --------------------------------------------------------------------------- #
 # Grounding context
 # --------------------------------------------------------------------------- #
-def build_context(result: PipelineResult, sensitivity: list | None = None) -> dict:
+def build_context(
+    result: PipelineResult,
+    sensitivity: list | None = None,
+    cashflow: CashFlowForecast | None = None,
+) -> dict:
     """Compact, authoritative JSON of the headline numbers for the model to ground on."""
     v, c, f = result.verification, result.certificate, result.fccr
     ar, inv = c.accounts_receivable, c.inventory
@@ -104,6 +109,23 @@ def build_context(result: PipelineResult, sensitivity: list | None = None) -> di
             "covenant_active": f.covenant_active,
             "equity_cure_needed": str(f.equity_cure_needed),
         },
+        "cashflow": None if cashflow is None else {
+            "anchor": str(cashflow.anchor_date),
+            "horizon_weeks": cashflow.horizon_weeks,
+            "opening_cash": str(cashflow.opening_cash),
+            "cash_floor": str(cashflow.cash_floor),
+            "min_closing": str(cashflow.kpis.min_closing),
+            "min_closing_week": cashflow.kpis.min_closing_week,
+            "weeks_below_floor": cashflow.kpis.weeks_below_floor,
+            "total_receipts": str(cashflow.kpis.total_receipts),
+            "total_disbursements": str(cashflow.kpis.total_disbursements),
+            "net_cash_flow": str(cashflow.kpis.net_cash_flow),
+            "exception_count": cashflow.kpis.exception_count,
+            "exceptions": [
+                {"type": e.type, "party": e.party, "amount": str(e.amount), "reason": e.reason_code}
+                for e in cashflow.exceptions[:6]
+            ],
+        },
         "sensitivity": sensitivity or [],
     }
 
@@ -123,10 +145,13 @@ def generate_briefing(context: dict) -> tuple[str, str]:
                         "content": (
                             "Computed analysis (JSON):\n"
                             + json.dumps(context, indent=2)
-                            + "\n\nWrite a ~200-word executive briefing in Markdown with three short sections: "
+                            + "\n\nWrite a ~260-word executive briefing in Markdown with four short sections: "
                             "**Data trust** (the verification exceptions), **Borrowing capacity** (the borrowing "
-                            "base and how much room remains), and **Covenant health** (the FCCR vs covenant, the "
-                            "trend, and any early warning). Cite the dollar figures and ratios."
+                            "base and how much room remains), **Covenant health** (the FCCR vs covenant, the "
+                            "trend, and any early warning), and **Liquidity** (the 13-week cash-flow forecast: "
+                            "the minimum closing cash and the week it bottoms, how many weeks fall below the cash "
+                            "floor, and the net cash flow). If the cashflow data is null, omit the Liquidity "
+                            "section. Cite the dollar figures and ratios."
                         ),
                     },
                 ]
@@ -205,4 +230,21 @@ def _fallback_briefing(ctx: dict) -> str:
         cure = 0.0
     if not f["in_compliance"] and cure > 0:
         out.append(f"An equity cure of **{_money(f['equity_cure_needed'])}** would restore compliance.")
+
+    cfx = ctx.get("cashflow")
+    if cfx:
+        out += ["", "### Liquidity"]
+        if cfx["weeks_below_floor"]:
+            out.append(
+                f"The 13-week forecast dips to **{_money(cfx['min_closing'])}** in week "
+                f"{cfx['min_closing_week']}, below the {_money(cfx['cash_floor'])} floor in "
+                f"**{cfx['weeks_below_floor']} week(s)** — a near-term financing need. Net cash "
+                f"flow over the horizon is {_money(cfx['net_cash_flow'])}."
+            )
+        else:
+            out.append(
+                f"The 13-week forecast stays above the {_money(cfx['cash_floor'])} floor; the "
+                f"trough is **{_money(cfx['min_closing'])}** in week {cfx['min_closing_week']}, "
+                f"with {_money(cfx['net_cash_flow'])} of net cash flow over the horizon."
+            )
     return "\n".join(out)

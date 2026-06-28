@@ -79,3 +79,28 @@ def render_fccr(report: dict) -> str:
     covenant = Decimal(str(report["covenant"]))
     cov_pct = float(covenant / hi * 100)
     return _ENV.get_template("fccr_report.html").render(r=report, bars=bars, cov_pct=cov_pct)
+
+
+def render_cashflow(forecast: dict) -> str:
+    # precompute closing-cash bar widths (handles negative closings via a shared
+    # baseline) and the floor marker, for a print-friendly chart.
+    positions = forecast.get("positions", [])
+    floor = Decimal(str(forecast["cash_floor"]))
+    closings = [Decimal(str(p["closing"])) for p in positions] or [Decimal("0")]
+    lo = min(closings + [floor, Decimal("0")])
+    hi = max(closings + [floor]) or Decimal("1")
+    span = (hi - lo) or Decimal("1")
+    bars = [
+        {
+            "week": p["week"],
+            "week_start": p["week_start"],
+            "closing": p["closing"],
+            "pct": float((Decimal(str(p["closing"])) - lo) / span * 100),
+            "below": p["below_floor"],
+        }
+        for p in positions
+    ]
+    floor_pct = float((floor - lo) / span * 100)
+    return _ENV.get_template("cashflow_forecast.html").render(
+        cf=forecast, bars=bars, floor_pct=floor_pct
+    )
