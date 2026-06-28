@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import csv
 import random
+from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -466,6 +467,244 @@ def _assert_calibration_stress(ar, inv, tb, bs) -> None:
 
 
 # --------------------------------------------------------------------------- #
+# Cash-flow ledger (13-week direct forecast)
+# --------------------------------------------------------------------------- #
+# The cash model uses McLane-style operating segments (distinct from the five
+# borrowing-base segments above). Each segment has an observed average payment
+# lag (days late) that the timing engine applies to size the behavioral edge.
+CF_SEGMENTS = ["Domestic Trading", "International Trading", "3PL", "Warehouse", "MHS", "Transportation"]
+SEGMENT_LAG = {
+    "Domestic Trading": 5, "International Trading": 7, "3PL": 10,
+    "Warehouse": 6, "MHS": 4, "Transportation": 4,
+}
+CF_INFLOW_WEIGHTS = {
+    "Domestic Trading": "0.34", "International Trading": "0.20", "3PL": "0.14",
+    "Warehouse": "0.12", "MHS": "0.12", "Transportation": "0.08",
+}
+CF_AP_WEIGHTS = {
+    "Domestic Trading": "0.50", "International Trading": "0.25", "MHS": "0.13", "Transportation": "0.12",
+}
+CF_TERMS = {
+    "Domestic Trading": "Net 30", "International Trading": "Net 45", "3PL": "Net 30",
+    "Warehouse": "Net 30", "MHS": "Net 20", "Transportation": "Net 15",
+}
+CF_CUSTOMERS = {
+    "Domestic Trading": ["Sysco Regional Kitchens", "US Foods Northeast", "Gateway Distribution Co"],
+    "International Trading": ["Pacific Rim Importers", "Andes Provisions SA", "Gulf Maritime Supply"],
+    "3PL": ["Reynolds 3PL Logistics", "Coastal Fulfillment Partners"],
+    "Warehouse": ["Heartland Warehouse Co", "Prairie Storage LLC"],
+    "MHS": ["Three Square Food Bank", "Community Hunger Relief"],
+    "Transportation": ["Interstate Freight Partners", "Delta Freight Foods"],
+}
+CF_VENDORS = {
+    "Domestic Trading": ["Reynolds Consumer Products", "Del Monte Foods"],
+    "International Trading": ["Pacific Trading Co", "Global Provisions Ltd"],
+    "MHS": ["FoodSource Wholesale"],
+    "Transportation": ["FleetFuel Services"],
+}
+REASON_ACTION = {
+    "Credit Memo": "Review",
+    "Dispute": "Escalate to controller",
+    "Over 90 Days": "Move to collections / write-down review",
+    "Unlinked Deposit": "Apply to AR or refund",
+    "Unlinked Prepay": "Match to AP or recover",
+}
+
+# Per-scenario weekly receipts (R) and accounts-payable (AP) in $thousands, plus
+# the fixed-cost schedule (type, [weeks], $thousands). Calibrated so baseline
+# stays above the floor while stress breaches it in the near term then recovers.
+_CF_PLAN = {
+    "baseline": {
+        "R":  [2200, 2400, 2600, 2500, 2700, 2800, 2600, 2900, 3000, 2800, 3100, 3000, 3300],
+        "AP": [1500, 1600, 1500, 1700, 1600, 1500, 1700, 1600, 1500, 1700, 1600, 1500, 1700],
+        "fixed": [
+            ("Payroll", [1, 3, 5, 7, 9, 11, 13], "900"),
+            ("Rent", [1, 5, 9, 13], "160"),
+            ("Insurance", [1, 5, 9, 13], "80"),
+            ("Tax", [4, 11], "550"),
+            ("Debt Service", [5, 13], "350"),
+            ("Intercompany", [3, 8], "200"),
+            ("Revolver", [7], "500"),            # paydown on the line in a healthy week
+        ],
+    },
+    "stress": {
+        "R":  [2200, 2300, 2400, 2500, 2700, 2800, 2900, 3000, 3000, 3100, 3200, 3200, 3300],
+        "AP": [1500, 1500, 1500, 1600, 1500, 1600, 1500, 1600, 1500, 1600, 1500, 1600, 1500],
+        "fixed": [
+            ("Payroll", [1, 3, 5, 7, 9, 11, 13], "950"),
+            ("Rent", [1, 5, 9, 13], "180"),
+            ("Insurance", [1, 5, 9, 13], "90"),
+            ("Tax", [3], "900"),
+            ("Debt Service", [3], "1200"),
+            ("Intercompany", [4, 8], "200"),
+        ],
+    },
+}
+
+
+def _terms_days(terms: str) -> int:
+    parts = terms.split()
+    return int(parts[-1]) if len(parts) == 2 and parts[0] == "Net" and parts[-1].isdigit() else 0
+
+
+def build_paid_history(scenario: str) -> list[dict]:
+    """A calibration sample whose per-party AND per-segment mean lag equals the
+    segment constant exactly (values spread ±1 day for a realistic std dev)."""
+    rows: list[dict] = []
+    base = date(2025, 9, 1)
+    i = 0
+    for seg in CF_SEGMENTS:
+        lag = SEGMENT_LAG[seg]
+        spread = [lag - 1, lag, lag + 1]
+        for party in CF_CUSTOMERS[seg]:
+            for k in range(6):  # 6 samples/party -> party lag eligible, mean == lag
+                dl = spread[k % 3]
+                due = base + timedelta(days=i * 2)
+                paid = due + timedelta(days=dl)
+                i += 1
+                rows.append({
+                    "party": party, "segment": seg, "terms": CF_TERMS[seg],
+                    "due_date": due.isoformat(), "paid_date": paid.isoformat(),
+                })
+    return rows
+
+
+def build_cash_events(config, scenario: str) -> list[dict]:
+    """One row per cash event, timed so the behavioral edge lands in the intended
+    week (due date back-dated by the segment lag to the Wednesday of that week)."""
+    cf = config.cash_flow
+    anchor = cf.anchor_date
+    plan = _CF_PLAN[scenario]
+    R, AP = plan["R"], plan["AP"]
+    horizon = len(R)
+
+    events: list[dict] = []
+    base_ar: dict[tuple[int, str], dict] = {}
+    base_ap: dict[tuple[int, str], dict] = {}
+    rid = 0
+
+    def nid() -> str:
+        nonlocal rid
+        rid += 1
+        return f"CF{rid:04d}"
+
+    def wed(w: int) -> date:
+        return anchor + timedelta(days=7 * (w - 1) + 2)
+
+    def row(typ, party, seg, amount, due, terms, ref="—"):
+        return {
+            "row_id": nid(), "po_so": ref, "type": typ, "party": party, "segment": seg,
+            "gross_amount": amount,
+            "doc_date": (due - timedelta(days=_terms_days(terms))).isoformat(),
+            "due_date": due.isoformat(), "terms": terms,
+            "exception_flag": False, "exception_reason": "", "suggested_action": "",
+        }
+
+    cust_idx = {s: 0 for s in CF_SEGMENTS}
+    vend_idx = {s: 0 for s in CF_AP_WEIGHTS}
+    ar_seq = ap_seq = 0
+    for w in range(1, horizon + 1):
+        for seg, wt in CF_INFLOW_WEIGHTS.items():
+            amt = (_d(R[w - 1]) * _d("1000") * _d(wt)).quantize(CENT)
+            terms = CF_TERMS[seg]
+            due = wed(w) - timedelta(days=SEGMENT_LAG[seg])
+            party = CF_CUSTOMERS[seg][cust_idx[seg] % len(CF_CUSTOMERS[seg])]
+            cust_idx[seg] += 1
+            ar_seq += 1
+            r = row("Net AR", party, seg, amt, due, terms, ref=f"AR-{ar_seq:04d}")
+            events.append(r)
+            base_ar[(w, seg)] = r
+        for seg, wt in CF_AP_WEIGHTS.items():
+            amt = (_d(AP[w - 1]) * _d("1000") * _d(wt)).quantize(CENT)
+            terms = CF_TERMS[seg]
+            due = wed(w) - timedelta(days=SEGMENT_LAG[seg])
+            party = CF_VENDORS[seg][vend_idx[seg] % len(CF_VENDORS[seg])]
+            vend_idx[seg] += 1
+            ap_seq += 1
+            r = row("Net AP", party, seg, -amt, due, terms, ref=f"AP-{ap_seq:04d}")
+            events.append(r)
+            base_ap[(w, seg)] = r
+        for typ, weeks, amt_k in plan["fixed"]:
+            if w in weeks:
+                amt = (_d(amt_k) * _d("1000")).quantize(CENT)
+                events.append(row(typ, "—", "Treasury / Overhead", -amt, wed(w), ""))
+
+    # --- type variety (relabels preserve weekly totals; placement unchanged) ---
+    aging = base_ar[(1, "Domestic Trading")]
+    aging.update(type="Aging AR", due_date=(anchor - timedelta(days=45)).isoformat(),
+                 doc_date=(anchor - timedelta(days=75)).isoformat())
+    deposit = base_ar[(6, "International Trading")]
+    deposit.update(type="Customer Deposit")
+    # International Trading is the only segment carrying customer/vendor prepays.
+    prepay = base_ap[(9, "International Trading")]
+    prepay.update(type="Vendor Prepay")
+    manual = base_ar[(7, "Domestic Trading")]
+    manual.update(type="Manual Forecast IN", due_date=wed(7).isoformat())
+
+    # --- exceptions register (flags don't change totals) ---
+    def flag(r, reason):
+        r.update(exception_flag=True, exception_reason=reason, suggested_action=REASON_ACTION[reason])
+
+    flag(aging, "Over 90 Days")
+    flag(base_ar[(2, "Domestic Trading")], "Credit Memo")
+    flag(base_ap[(3, "International Trading")], "Dispute")
+    flag(deposit, "Unlinked Deposit")
+    flag(prepay, "Unlinked Prepay")
+    if scenario == "stress":
+        flag(base_ar[(4, "MHS")], "Credit Memo")
+        flag(base_ap[(5, "Domestic Trading")], "Dispute")
+        flag(base_ar[(11, "International Trading")], "Over 90 Days")
+
+    return events
+
+
+def cash_flow_projection(config, scenario: str) -> dict:
+    """The no-lag weekly projection used to calibrate the demo (the engine, which
+    times each event, reproduces these closings exactly because lags are exact)."""
+    cf = config.cash_flow
+    plan = _CF_PLAN[scenario]
+    R, AP = plan["R"], plan["AP"]
+    horizon = len(R)
+    fixed_by_week = [D("0")] * horizon
+    for _typ, weeks, amt_k in plan["fixed"]:
+        for w in weeks:
+            fixed_by_week[w - 1] += _d(amt_k) * _d("1000")
+
+    bal = cf.opening_cash
+    closings: list[Decimal] = []
+    total_receipts = D("0")
+    total_disb = D("0")
+    for i in range(horizon):
+        rec = _d(R[i]) * _d("1000")
+        dis = _d(AP[i]) * _d("1000") + fixed_by_week[i]
+        total_receipts += rec
+        total_disb += dis
+        bal = bal + rec - dis
+        closings.append(bal)
+    lo = min(closings)
+    return {
+        "closings": closings,
+        "min_closing": lo,
+        "min_closing_week": closings.index(lo) + 1,
+        "weeks_below_floor": sum(1 for c in closings if c < cf.cash_floor),
+        "total_receipts": total_receipts,
+        "total_disbursements": -total_disb,
+        "opening": cf.opening_cash,
+        "floor": cf.cash_floor,
+    }
+
+
+def _assert_cash_flow(config, scenario: str) -> None:
+    p = cash_flow_projection(config, scenario)
+    if scenario == "stress":
+        assert p["weeks_below_floor"] >= 1, f"stress should breach the floor, got {p['weeks_below_floor']}"
+        assert p["min_closing"] < p["floor"], f"stress min closing {p['min_closing']} not below floor"
+    else:
+        assert p["weeks_below_floor"] == 0, f"baseline should stay above floor, got {p['weeks_below_floor']}"
+        assert p["min_closing"] > p["floor"], f"baseline min closing {p['min_closing']} not above floor"
+
+
+# --------------------------------------------------------------------------- #
 # Calibration assertions
 # --------------------------------------------------------------------------- #
 def _assert_calibration(ar, inv, tb, bs) -> None:
@@ -561,6 +800,10 @@ def generate(
         refreshed = build_financials_refreshed()
         _assert_calibration(ar, inv, tb, bs)
 
+    cash_events = build_cash_events(config, scenario)
+    paid_history = build_paid_history(scenario)
+    _assert_cash_flow(config, scenario)
+
     paths = {
         "ar_aging": out_dir / "ar_aging.csv",
         "inventory": out_dir / "inventory.csv",
@@ -568,6 +811,8 @@ def generate(
         "balance_sheet": out_dir / "balance_sheet.csv",
         "financials_ttm": out_dir / "financials_ttm.csv",
         "financials_2025_refreshed": out_dir / "financials_2025_refreshed.csv",
+        "cash_events": out_dir / "cash_events.csv",
+        "paid_history": out_dir / "paid_history.csv",
     }
 
     _write_csv(
@@ -585,6 +830,17 @@ def generate(
     _write_csv(paths["balance_sheet"], ["line_item", "metric", "section", "amount"], bs)
     _write_csv(paths["financials_ttm"], ["metric", "value", "period"], ttm)
     _write_csv(paths["financials_2025_refreshed"], ["metric", "value", "period"], refreshed)
+    _write_csv(
+        paths["cash_events"],
+        ["row_id", "po_so", "type", "party", "segment", "gross_amount", "doc_date", "due_date",
+         "terms", "exception_flag", "exception_reason", "suggested_action"],
+        cash_events,
+    )
+    _write_csv(
+        paths["paid_history"],
+        ["party", "segment", "terms", "due_date", "paid_date"],
+        paid_history,
+    )
 
     return paths
 

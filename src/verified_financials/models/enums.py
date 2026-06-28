@@ -12,6 +12,8 @@ class Dataset(str, Enum):
     INVENTORY = "inventory"
     FINANCIALS_TTM = "financials_ttm"
     FINANCIALS_REFRESHED = "financials_refreshed"
+    CASH_EVENTS = "cash_events"
+    PAID_HISTORY = "paid_history"
 
 
 class Severity(str, Enum):

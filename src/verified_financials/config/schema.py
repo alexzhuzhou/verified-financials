@@ -129,6 +129,32 @@ class FccrConfig(_Frozen):
 
 
 # --------------------------------------------------------------------------- #
+# Cash flow (13-week direct forecast)
+# --------------------------------------------------------------------------- #
+class CashFlowConfig(_Frozen):
+    """Parameters for the bottom-up 13-week cash-flow forecast.
+
+    The ledger of cash events drives the amounts; this config controls the
+    horizon, the opening balance, the floor that flags a liquidity squeeze, and
+    the timing engine (how the behavioral lag is applied / overridden).
+    """
+
+    anchor_date: date                          # W1 Monday — the forecast start
+    horizon_weeks: int = 13
+    opening_cash: Decimal                       # bank cash at the start of W1
+    cash_floor: Decimal = Decimal("0")          # flag any week closing below this
+    timing_method: Literal["behavioral", "contractual"] = "behavioral"  # primary edge
+    lag_fallback_min_samples: int = 5           # party lag used only with >= this many paid samples
+    # Event types that bypass the lag engine entirely (post on their stated date).
+    fixed_cost_types: list[str] = Field(
+        default_factory=lambda: [
+            "Payroll", "Rent", "Tax", "Insurance", "Intercompany", "Debt Service", "Revolver",
+        ]
+    )
+    global_lag_shift_days: Decimal = Decimal("0")   # what-if: shift every behavioral lag by N days
+
+
+# --------------------------------------------------------------------------- #
 # Verification
 # --------------------------------------------------------------------------- #
 Severity = Literal["info", "low", "medium", "high", "critical"]
@@ -162,5 +188,6 @@ class Config(_Frozen):
     facility: FacilityConfig
     borrowing_base: BorrowingBaseConfig
     fccr: FccrConfig
+    cash_flow: CashFlowConfig
     verification: VerificationConfig
     settings: SettingsConfig = Field(default_factory=SettingsConfig)

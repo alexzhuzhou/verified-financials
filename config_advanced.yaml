@@ -102,6 +102,17 @@ fccr:
     cures_used: 0
     citation: 'Credit Agreement §8.4 Equity Cure Right'
 
+cash_flow:
+  # Tighter liquidity than baseline: a lower opening balance plus a heavy
+  # disbursement cluster (payroll + tax + debt service) drives a week below floor.
+  anchor_date: "2026-01-05"         # W1 Monday
+  horizon_weeks: 13
+  opening_cash: "1500000"           # leaner $1.5M start
+  cash_floor: "1000000"             # flag any week closing below $1.0M
+  timing_method: "behavioral"
+  lag_fallback_min_samples: 5
+  global_lag_shift_days: "0"
+
 verification:
   default_tolerance_abs: "1000"
   checks:

@@ -104,7 +104,7 @@
   "borrowing_base": "19750000.00",
   "certificate_no": 1,
   "commitment": "30000000.00",
-  "config_hash": "ad6abbdf62210daad341f58106d41e1e1a72bd0ec8a600b692217a0fdc6dc4e1",
+  "config_hash": "a489e649ef83c56f079b4aa37345e180e4a0e0afefcfb8c2866a1469607540c0",
   "excess_availability": "1750000.00",
   "facility_name": "Senior Secured Revolving Credit Facility (ABL)",
   "gross_availability": "21600000.00",
