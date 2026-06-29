@@ -27,10 +27,12 @@ function fmtAxis(v: number): string {
 export function ClosingCashChart({
   forecast,
   emphasis = "behavioral",
+  actuals,
   className,
 }: {
   forecast: CashFlowForecast;
   emphasis?: "behavioral" | "contractual";
+  actuals?: Record<number, number>;
   className?: string;
 }) {
   const floor = Number(forecast.cash_floor);
@@ -41,13 +43,14 @@ export function ClosingCashChart({
         week: `W${p.week}`,
         behavioral: Number(p.closing),
         contractual: Number(p.closing_contractual),
+        actual: actuals?.[p.week] ?? null,
         below: p.below_floor,
       })),
-    [forecast],
+    [forecast, actuals],
   );
 
   const { lo, hi } = useMemo(() => {
-    const values = rows.flatMap((r) => [r.behavioral, r.contractual]);
+    const values = rows.flatMap((r) => [r.behavioral, r.contractual, ...(r.actual != null ? [r.actual] : [])]);
     // Frame to the floor + the actual closings — don't force zero into view, so a
     // healthy baseline sits calmly above the floor and only stress dips negative.
     const all = [floor, ...values];
@@ -95,7 +98,10 @@ export function ClosingCashChart({
               width={64}
             />
             <Tooltip
-              formatter={(v: number, name) => [money(v), name === "behavioral" ? "Behavioral" : "Contractual"]}
+              formatter={(v: number, name) => [
+                money(v),
+                name === "behavioral" ? "Behavioral" : name === "actual" ? "Actual" : "Contractual",
+              ]}
             />
             <ReferenceLine
               y={floor}
@@ -143,6 +149,17 @@ export function ClosingCashChart({
                   />
                 );
               }}
+            />
+            {/* Reported actuals for the closed weeks — diverges from the forecast. */}
+            <Line
+              type="monotone"
+              dataKey="actual"
+              name="actual"
+              stroke="hsl(var(--warn))"
+              strokeWidth={2.5}
+              connectNulls={false}
+              isAnimationActive={false}
+              dot={{ r: 4, fill: "hsl(var(--warn))", stroke: "white", strokeWidth: 1 }}
             />
           </LineChart>
         </ResponsiveContainer>

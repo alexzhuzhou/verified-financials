@@ -43,13 +43,17 @@ const { fixture } = vi.hoisted(() => {
             week: 1, week_start: "2026-01-05", total_receipts: "800000",
             total_disbursements: "-950000", net: "-150000", opening: "1500000",
             closing: "1350000", closing_contractual: "1350000", below_floor: false,
+            actual_closing: "1300000", variance_closing: "-50000",
           },
           {
             week: 2, week_start: "2026-01-12", total_receipts: "900000",
             total_disbursements: "-1450000", net: "-550000", opening: "1350000",
             closing: "800000", closing_contractual: "1350000", below_floor: true,
+            actual_closing: null, variance_closing: null,
           },
         ],
+        actuals_through_week: 1,
+        variance_to_date: "-50000",
         kpis: {
           min_closing: "800000", min_closing_week: 2, total_receipts: "1700000",
           total_disbursements: "-2400000", net_cash_flow: "-700000", avg_weekly_net: "-350000",
@@ -101,5 +105,8 @@ describe("CashFlowPage", () => {
     expect(screen.getAllByText(/payroll/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/dispute/i)).toBeInTheDocument();
     expect(screen.getByText(/escalate to controller/i)).toBeInTheDocument();
+    // forecast-vs-actual variance section (1 closed week, -$50k to date)
+    expect(screen.getByText(/forecast vs\. actual/i)).toBeInTheDocument();
+    expect(screen.getByText(/reset to reported/i)).toBeInTheDocument();
   });
 });

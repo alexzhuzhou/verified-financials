@@ -257,6 +257,8 @@ export interface WeekPosition {
   closing: string;
   closing_contractual: string;
   below_floor: boolean;
+  actual_closing: string | null;
+  variance_closing: string | null;
 }
 
 export interface CashFlowKpis {
@@ -302,6 +304,8 @@ export interface CashFlowForecast {
   positions: WeekPosition[];
   kpis: CashFlowKpis;
   kpis_contractual: CashFlowKpis;
+  actuals_through_week: number;
+  variance_to_date: string;
   exceptions: CashFlowException[];
   segment_lags: SegmentLag[];
   ledger: LedgerLine[];

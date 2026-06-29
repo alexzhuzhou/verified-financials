@@ -1,5 +1,5 @@
 import { AlertTriangle, ArrowDownToLine, Download, Eye, Loader2, TrendingDown, Waves } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { KpiTile } from "@/components/KpiTile";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CashExceptionsTable } from "@/features/cash-flow/CashExceptionsTable";
 import { ClosingCashChart } from "@/features/cash-flow/ClosingCashChart";
+import { ForecastVsActualCard } from "@/features/cash-flow/ForecastVsActualCard";
 import { WeeklyWaterfallGrid } from "@/features/cash-flow/WeeklyWaterfallGrid";
 import { useCashFlow } from "@/hooks/queries";
 import { api } from "@/lib/api";
@@ -37,6 +38,20 @@ export function CashFlowPage() {
   const [edge, setEdge] = useState<"behavioral" | "contractual">("behavioral");
   const [busy, setBusy] = useState<null | "view" | "download">(null);
   const [exportError, setExportError] = useState<string | null>(null);
+
+  // Editable reported actuals for the closed weeks, seeded from the forecast.
+  const [actuals, setActuals] = useState<Record<number, number>>({});
+  const seed = useMemo(() => {
+    const fc = data?.forecast;
+    if (!fc) return {} as Record<number, number>;
+    return Object.fromEntries(
+      fc.positions.filter((p) => p.actual_closing != null).map((p) => [p.week, Number(p.actual_closing)]),
+    );
+  }, [data?.forecast]);
+  const seedKey = JSON.stringify(seed);
+  // Re-seed when the scenario's reported actuals change (not on every what-if recompute).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => setActuals(seed), [seedKey]);
 
   async function exportForecast(mode: "view" | "download") {
     setExportError(null);
@@ -176,8 +191,17 @@ export function CashFlowPage() {
       </div>
 
       <div id="tour-cashflow-chart">
-        <ClosingCashChart forecast={f} emphasis={edge} />
+        <ClosingCashChart forecast={f} emphasis={edge} actuals={actuals} />
       </div>
+
+      {f.actuals_through_week > 0 && (
+        <ForecastVsActualCard
+          closed={f.positions.filter((p) => p.actual_closing != null)}
+          actuals={actuals}
+          onChange={(week, value) => setActuals((a) => ({ ...a, [week]: value }))}
+          onReset={() => setActuals(seed)}
+        />
+      )}
 
       <Card>
         <CardHeader><CardTitle className="font-serif text-base">Weekly waterfall</CardTitle></CardHeader>
