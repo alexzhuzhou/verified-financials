@@ -112,6 +112,12 @@ cash_flow:
   timing_method: "behavioral"
   lag_fallback_min_samples: 5
   global_lag_shift_days: "0"
+  # Reported actuals (forecast 0.98/1.78/−0.37M) — collections running below plan,
+  # so the real near-term trough is deeper than forecast.
+  actuals:
+    - { week: 1, closing: "780000" }
+    - { week: 2, closing: "1330000" }
+    - { week: 3, closing: "-1120000" }
 
 verification:
   default_tolerance_abs: "1000"

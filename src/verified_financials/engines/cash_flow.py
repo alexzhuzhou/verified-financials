@@ -201,13 +201,15 @@ def compute_cash_flow(repo: FactRepository, config: Config, run_id: str) -> Cash
     inflow_rows = make_rows("inflow")
     outflow_rows = make_rows("outflow")
 
-    # --- 4. weekly positions + roll-forward (both edges) ---
+    # --- 4. weekly positions + roll-forward (both edges) + reported actuals ---
+    actual_by_week = {wa.week: wa.closing for wa in cf.actuals}
     positions: list[WeekPosition] = []
     fc_open = ct_open = cf.opening_cash
     for w in range(1, horizon + 1):
         fc_net = fc_recv[w] + fc_disb[w]
         fc_close = fc_open + fc_net
         ct_close = ct_open + ct_recv[w] + ct_disb[w]
+        act = actual_by_week.get(w)
         positions.append(WeekPosition(
             week=w, week_start=anchor + timedelta(days=7 * (w - 1)),
             total_receipts=fc_recv[w].quantize(CENT),
@@ -217,8 +219,14 @@ def compute_cash_flow(repo: FactRepository, config: Config, run_id: str) -> Cash
             closing=fc_close.quantize(CENT),
             closing_contractual=ct_close.quantize(CENT),
             below_floor=fc_close < floor,
+            actual_closing=act.quantize(CENT) if act is not None else None,
+            variance_closing=(act - fc_close).quantize(CENT) if act is not None else None,
         ))
         fc_open, ct_open = fc_close, ct_close
+
+    # variance to date = actual − forecast closing at the latest closed week
+    closed = [p for p in positions if p.variance_closing is not None]
+    variance_to_date = closed[-1].variance_closing if closed else ZERO
 
     # --- 5. KPIs (behavioral primary + contractual edge) ---
     def kpis(closings: list[Decimal], recv: list[Decimal], disb: list[Decimal]) -> CashFlowKpis:
@@ -267,6 +275,8 @@ def compute_cash_flow(repo: FactRepository, config: Config, run_id: str) -> Cash
         positions=positions,
         kpis=kpis_fc,
         kpis_contractual=kpis_ct,
+        actuals_through_week=len(cf.actuals),
+        variance_to_date=variance_to_date,
         exceptions=exceptions,
         segment_lags=segment_lags,
         ledger=ledger,

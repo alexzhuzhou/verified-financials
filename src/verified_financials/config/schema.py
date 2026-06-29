@@ -131,6 +131,13 @@ class FccrConfig(_Frozen):
 # --------------------------------------------------------------------------- #
 # Cash flow (13-week direct forecast)
 # --------------------------------------------------------------------------- #
+class WeekActual(_Frozen):
+    """Bank-reconciled actual closing cash for a closed forecast week."""
+
+    week: int
+    closing: Decimal
+
+
 class CashFlowConfig(_Frozen):
     """Parameters for the bottom-up 13-week cash-flow forecast.
 
@@ -152,6 +159,8 @@ class CashFlowConfig(_Frozen):
         ]
     )
     global_lag_shift_days: Decimal = Decimal("0")   # what-if: shift every behavioral lag by N days
+    # Reported actual closing cash for the weeks that have closed (drives variance-to-date).
+    actuals: list[WeekActual] = Field(default_factory=list)
 
 
 # --------------------------------------------------------------------------- #

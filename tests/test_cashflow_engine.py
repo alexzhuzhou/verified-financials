@@ -76,6 +76,20 @@ def test_behavioral_lag_uses_party_or_segment(tmp_path):
     assert dom and all(li.lag_days == D("5.0") for li in dom)
 
 
+def test_actuals_and_variance(tmp_path):
+    """Variance = actual − forecast for closed weeks; None beyond; cumulative to date."""
+    cfg = load_config()
+    f = compute_cash_flow(_repo(tmp_path, cfg), cfg, "test")
+    closed = [p for p in f.positions if p.variance_closing is not None]
+    assert len(closed) == f.actuals_through_week == 3
+    for p in closed:
+        assert p.actual_closing is not None
+        assert p.variance_closing == p.actual_closing - p.closing
+    # weeks past the closed window carry no actuals
+    assert all(p.actual_closing is None for p in f.positions[f.actuals_through_week:])
+    assert f.variance_to_date == closed[-1].variance_closing
+
+
 def test_whatif_cash_floor_override_flags_more_weeks(tmp_path):
     """Raising the floor turns previously-fine weeks into breaches."""
     cfg = load_config()

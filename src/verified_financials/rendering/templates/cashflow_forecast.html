@@ -58,6 +58,25 @@
   <div class="prov">Red marker = {{ cf.cash_floor | money }} cash floor. Red bars breach it.</div>
 </div>
 
+{% if cf.actuals_through_week > 0 %}
+<h2 class="section">Forecast vs. Actual — Variance to Date</h2>
+<table class="lines">
+  <thead><tr><th>Week</th><th class="num">Forecast closing</th><th class="num">Actual closing</th><th class="num">Variance</th></tr></thead>
+  <tbody>
+    {% for p in cf.positions if p.variance_closing is not none %}
+    <tr><td class="label">W{{ p.week }}</td>
+        <td class="num">{{ p.closing | money(0) }}</td>
+        <td class="num">{{ p.actual_closing | money(0) }}</td>
+        <td class="num">{{ p.variance_closing | money(0) }}</td></tr>
+    {% endfor %}
+    <tr class="subtotal"><td>Variance to date ({{ cf.actuals_through_week }} weeks closed)</td><td></td><td></td>
+        <td class="num">{{ cf.variance_to_date | money(0) }}</td></tr>
+  </tbody>
+</table>
+<div class="prov">Actual = bank-reconciled closing cash for the closed weeks. Variance = Actual − Forecast;
+  a negative figure means cash is running behind plan.</div>
+{% endif %}
+
 <h2 class="section">Weekly Cash Position</h2>
 <table class="lines">
   <thead><tr><th>Week</th><th>Starting</th><th class="num">Receipts</th>

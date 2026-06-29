@@ -90,6 +90,12 @@ cash_flow:
   timing_method: "behavioral"       # primary edge: settle date + historical days-late lag
   lag_fallback_min_samples: 5       # use a party's own lag only with >= 5 paid samples
   global_lag_shift_days: "0"        # what-if knob: shift every behavioral lag by N days
+  # Reported actual closing cash for the weeks that have closed (forecast 1.56/2.36/2.36M)
+  # — tracking tight, slightly under plan.
+  actuals:
+    - { week: 1, closing: "1490000" }
+    - { week: 2, closing: "2210000" }
+    - { week: 3, closing: "2120000" }
 
 verification:
   default_tolerance_abs: "1000"     # $1k default tolerance

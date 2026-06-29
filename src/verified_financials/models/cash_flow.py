@@ -71,6 +71,8 @@ class WeekPosition(BaseModel):
     closing: Decimal
     closing_contractual: Decimal               # the band's optimistic edge
     below_floor: bool
+    actual_closing: Decimal | None = None      # reported actual (closed weeks only)
+    variance_closing: Decimal | None = None    # actual − forecast (closed weeks only)
 
 
 class CashFlowKpis(BaseModel):
@@ -130,6 +132,9 @@ class CashFlowForecast(BaseModel):
 
     kpis: CashFlowKpis                          # behavioral (primary)
     kpis_contractual: CashFlowKpis              # the band's optimistic edge
+
+    actuals_through_week: int = 0               # how many weeks have reported actuals
+    variance_to_date: Decimal = Decimal("0")    # actual − forecast closing at the last closed week
 
     exceptions: list[CashFlowException] = Field(default_factory=list)
     segment_lags: list[SegmentLag] = Field(default_factory=list)

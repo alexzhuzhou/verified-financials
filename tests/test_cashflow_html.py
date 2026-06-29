@@ -33,6 +33,7 @@ def test_cashflow_html_stress_shows_alert():
     assert "13-Week Cash Flow Forecast" in html
     assert "Red Lion Advisory" in html              # bank-ready letterhead
     assert "LIQUIDITY ALERT" in html                # stress breaches the floor
+    assert "Variance to Date" in html               # forecast-vs-actual section
 
 
 def test_cashflow_html_reflects_override():

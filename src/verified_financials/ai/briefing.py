@@ -117,6 +117,8 @@ def build_context(
             "min_closing": str(cashflow.kpis.min_closing),
             "min_closing_week": cashflow.kpis.min_closing_week,
             "weeks_below_floor": cashflow.kpis.weeks_below_floor,
+            "actuals_through_week": cashflow.actuals_through_week,
+            "variance_to_date": str(cashflow.variance_to_date),
             "total_receipts": str(cashflow.kpis.total_receipts),
             "total_disbursements": str(cashflow.kpis.total_disbursements),
             "net_cash_flow": str(cashflow.kpis.net_cash_flow),
@@ -150,8 +152,10 @@ def generate_briefing(context: dict) -> tuple[str, str]:
                             "base and how much room remains), **Covenant health** (the FCCR vs covenant, the "
                             "trend, and any early warning), and **Liquidity** (the 13-week cash-flow forecast: "
                             "the minimum closing cash and the week it bottoms, how many weeks fall below the cash "
-                            "floor, and the net cash flow). If the cashflow data is null, omit the Liquidity "
-                            "section. Cite the dollar figures and ratios."
+                            "floor, and the net cash flow; and if actuals_through_week > 0, note that with that "
+                            "many weeks closed, cash is running variance_to_date versus plan — a negative figure "
+                            "means behind plan). If the cashflow data is null, omit the Liquidity section. Cite "
+                            "the dollar figures and ratios."
                         ),
                     },
                 ]
@@ -246,5 +250,15 @@ def _fallback_briefing(ctx: dict) -> str:
                 f"The 13-week forecast stays above the {_money(cfx['cash_floor'])} floor; the "
                 f"trough is **{_money(cfx['min_closing'])}** in week {cfx['min_closing_week']}, "
                 f"with {_money(cfx['net_cash_flow'])} of net cash flow over the horizon."
+            )
+        if cfx.get("actuals_through_week"):
+            try:
+                var = float(cfx["variance_to_date"])
+            except (TypeError, ValueError):
+                var = 0.0
+            trend = "behind plan" if var < 0 else "ahead of plan" if var > 0 else "on plan"
+            out.append(
+                f"With {cfx['actuals_through_week']} week(s) closed, actual cash is "
+                f"**{_money(cfx['variance_to_date'])}** versus forecast — running {trend}."
             )
     return "\n".join(out)

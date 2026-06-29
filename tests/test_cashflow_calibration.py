@@ -43,6 +43,9 @@ def test_baseline_calibration(tmp_path):
     assert f.kpis.total_disbursements == D("-30660000.00")   # incl. a $500k revolver paydown
     assert f.kpis.net_cash_flow == D("5240000.00")
     assert f.kpis.exception_count == 5
+    # reported actuals (tracking tight, slightly under plan)
+    assert f.actuals_through_week == 3
+    assert f.variance_to_date == D("-240000.00")
     # engine reproduces the no-lag design projection exactly
     proj = datagen.cash_flow_projection(cfg, "baseline")
     assert [p.closing for p in f.positions] == proj["closings"]
@@ -54,6 +57,10 @@ def test_stress_calibration(tmp_path):
     assert f.kpis.min_closing == D("-370000.00")
     assert f.kpis.min_closing_week == 3
     assert f.kpis.exception_count == 8
+    # actuals running below forecast — the real near-term trough is deeper than projected
+    assert f.actuals_through_week == 3
+    assert f.variance_to_date == D("-750000.00")
+    assert f.positions[2].actual_closing < f.positions[2].closing
     # the contractual (optimistic) edge breaches less than the behavioral edge
     assert f.kpis_contractual.weeks_below_floor < f.kpis.weeks_below_floor
     proj = datagen.cash_flow_projection(cfg, "stress")
